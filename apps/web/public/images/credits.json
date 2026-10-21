@@ -1,0 +1,16 @@
+{
+  "collection": "FaceIQ — The Portrait Series",
+  "created": "2026-10-22",
+  "method": "Built-in image generation; original fictional adults. Not customer photographs or analysis results.",
+  "delivery": "Self-hosted WebP assets, encoded with the existing build image library. No external image service at runtime.",
+  "assets": [
+    {
+      "file": "campaign-enface.webp",
+      "prompt": "Use case: photorealistic-natural. Asset type: original luxury facial study website campaign hero, a single wide photograph, 1536x1024 landscape. Subject: one adult male age 27 with short dark brown slightly wavy hair, brown eyes, natural olive skin with pores and subtle freckles, elegant strong but naturally imperfect facial structure. Medium close-up head and upper shoulders wearing a plain black fine-knit crew neck. He is on the RIGHT HALF of frame, facing directly to camera, expression composed and warm-neutral, shoulders slightly angled. Leave the entire LEFT 45 percent as empty continuous warm taupe studio backdrop, tonal light not a blank white rectangle, for website typography. Top of hair fully visible, head centred at x=73%, eyes at y=39%, lower torso extends beyond bottom frame. Premium medium-format editorial portrait, 85mm lens, tactile unretouched skin, sculptural soft side lighting from upper right, subtle shadow falloff, faint analog film grain, rich espresso shadows and warm stone highlights, naturally desaturated earth colours. Matte, intimate, precise fashion agency aesthetic. Background #b5a18c taupe/stone, NOT grey-blue, NOT saturated orange. No printed text, no logo, no watermark, no geometric effects, no UI, no collage, no illustration. Original fictional model, not a real celebrity. Avoid plastic skin, glossy AI beauty rendering, smirking, exaggerated jaw, overprocessing."
+    },
+    {
+      "file": "campaign-profile.webp",
+      "prompt": "Use case: photorealistic-natural. Asset type: original luxury facial study website campaign portrait, landscape 1536x1024 single photograph. One adult woman age 28 with warm brown skin, dark hair slicked back in a neat low bun, small natural freckles, no accessories and no makeup except a natural matte finish, plain charcoal high-neck fine-knit top. Shown in a clean true SIDE PROFILE looking LEFT, ear visible, from upper chest to top of head. Her complete head is in the RIGHT HALF, head centred at x=70 percent, eyes at y=40 percent, with sculptural neck and realistic naturally individual facial proportions. Plenty of empty continuous warm stone taupe backdrop over LEFT 45 percent to place website text. Soft sculptural daylight, precise medium-format 85mm studio photography, rich matte espresso shadows and warm alabaster highlights, muted earth palette, subtle film grain, skin pores and natural asymmetry, authentic restrained fashion editorial. Background continuous warm taupe #b5a18c, no grey-blue, no pink background. Not a beauty advertisement, no oily glow. No text, no logos, no watermark, no UI, no diagram, no collage. Original fictional adult, no real celebrity resemblance. Avoid plastic CGI skin, excessive retouching, exaggerated features."
+    }
+  ]
+}

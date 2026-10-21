@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -18,20 +19,75 @@ export function LabIcon({ kind, className = "" }: { kind: string; className?: st
 
 const NAV = [
   { href: "/", label: "The studio", number: "01" },
-  { href: "/progress", label: "My dossiers", number: "02" },
-  { href: "/measurements", label: "The face atlas", number: "03" },
+  { href: "/measurements", label: "The face atlas", number: "02" },
+  { href: "/progress", label: "Your collection", number: "03" },
   { href: "/guide", label: "Photo notes", number: "04" },
 ];
+
 export function AppFrame({ children }: { children: React.ReactNode }) {
   const path = usePathname();
-  return <div className="atlas-frame">
+  const frame = useRef<HTMLDivElement>(null);
+  const menu = useRef<HTMLDialogElement>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const closeMenu = () => { menu.current?.close(); setMenuOpen(false); };
+
+  useEffect(() => {
+    const root = frame.current;
+    if (!root) return;
+    const motion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    let raf = 0;
+    const update = () => {
+      raf = 0;
+      root.dataset.scrolled = String(window.scrollY > 35);
+      const range = document.documentElement.scrollHeight - window.innerHeight;
+      root.style.setProperty("--reading-progress", String(range > 0 ? window.scrollY / range : 0));
+      root.style.setProperty("--portrait-drift", motion.matches ? "0px" : `${Math.min(window.scrollY * .12, 100)}px`);
+    };
+    const scroll = () => { if (!raf) raf = requestAnimationFrame(update); };
+    update();
+    window.addEventListener("scroll", scroll, { passive: true });
+    window.addEventListener("resize", scroll);
+    motion.addEventListener("change", scroll);
+    return () => { cancelAnimationFrame(raf); window.removeEventListener("scroll", scroll); window.removeEventListener("resize", scroll); motion.removeEventListener("change", scroll); };
+  }, [path]);
+
+  useEffect(() => {
+    const root = frame.current;
+    if (!root) return;
+    const motion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const elements = [...root.querySelectorAll<HTMLElement>("[data-reveal]")];
+    let observer: IntersectionObserver | undefined;
+    const setup = () => {
+      observer?.disconnect();
+      elements.forEach(element => element.removeAttribute("data-reveal-pending"));
+      if (motion.matches) return;
+      observer = new IntersectionObserver(entries => entries.forEach(entry => {
+        if (!entry.isIntersecting) return;
+        (entry.target as HTMLElement).removeAttribute("data-reveal-pending");
+        observer?.unobserve(entry.target);
+      }), { threshold: .08, rootMargin: "0px 0px -35px 0px" });
+      elements.forEach(element => {
+        if (element.getBoundingClientRect().top > window.innerHeight * .95) element.setAttribute("data-reveal-pending", "true");
+        observer?.observe(element);
+      });
+    };
+    setup();
+    motion.addEventListener("change", setup);
+    return () => { observer?.disconnect(); motion.removeEventListener("change", setup); };
+  }, [path]);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = previous; };
+  }, [menuOpen]);
+
+  return <div ref={frame} className="atlas-frame maison-frame">
     <a href="#workspace" className="skip-link">Skip to workspace</a>
-    <div className="atlas-utility"><span>AN INDEPENDENT STUDY OF THE FACE</span><span className="local-badge"><i/> PRIVATE & LOCAL <b> / </b> EST. 2026</span></div>
-    <header className="atlas-masthead"><Link href="/" className="atlas-brand" aria-label="FaceIQ home">faceiq<span>.</span><small>THE PRIVATE ATLAS</small></Link><nav className="atlas-nav" aria-label="Main navigation">{NAV.map(item => {
-      const active = item.href === "/" ? path === "/" : path.startsWith(item.href);
-      return <Link key={item.href} href={item.href} aria-current={active ? "page" : undefined}><sup>{item.number}</sup>{item.label}</Link>;
-    })}</nav><Link href="/scan" className="masthead-action">New study <span>↗</span></Link><Link href="/settings" className="atlas-settings" aria-label="Settings & backups"><LabIcon kind="settings"/></Link></header>
-    <div id="workspace" className="atlas-workspace">{children}</div>
-    <footer className="atlas-footer"><Link href="/" className="footer-monogram">f.</Link><p>A study in individuality.<span>On your device. On your terms.</span></p><div><Link href="/about">About the atlas ↗</Link><span>FreeHarmony · AGPL-3.0 / LOCAL EDITION 03</span></div></footer>
+    <header className="maison-header"><div className="maison-header-left"><button className="maison-menu-trigger" onClick={() => { menu.current?.showModal(); setMenuOpen(true); }} aria-expanded={menuOpen} aria-controls="studio-menu"><span className="menu-bars" aria-hidden="true"><i/><i/></span><span>Menu</span></button><Link className="header-atlas-link" href="/measurements">The atlas</Link></div><Link href="/" className="maison-wordmark" aria-label="FaceIQ home">faceiq<span>.</span></Link><div className="maison-header-right"><Link href="/progress" className="header-collection-link">Collection</Link><Link href="/scan" className="maison-booking">Begin a study <span>↗</span></Link></div><div className="reading-progress" aria-hidden="true"/></header>
+    <dialog ref={menu} id="studio-menu" className="maison-menu" onClose={() => setMenuOpen(false)} onClick={event => { if (event.target === event.currentTarget) closeMenu(); }} aria-label="Studio navigation"><div className="menu-shell"><div className="menu-topline"><span>FACEIQ / THE PRIVATE ATLAS</span><button onClick={closeMenu} className="menu-close" aria-label="Close menu">Close <span>×</span></button></div><div className="menu-composition"><nav aria-label="Main navigation">{NAV.map(item => <Link key={item.href} href={item.href} onClick={closeMenu} aria-current={(item.href === "/" ? path === "/" : path.startsWith(item.href)) ? "page" : undefined}><span>{item.number}</span><span>{item.label}</span><i>↗</i></Link>)}<Link href="/settings" onClick={closeMenu}><span>05</span><span>Settings & backups</span><i>↗</i></Link></nav><div className="menu-image"><img src="/images/campaign-profile.webp" alt="" width="1536" height="1024"/><span>INDIVIDUALITY, IN FOCUS.</span></div></div><div className="menu-bottomline"><span>YOUR PHOTOGRAPHS STAY WITH YOU.</span><Link href="/scan" onClick={closeMenu}>Begin a private study ↗</Link></div></div></dialog>
+    <div id="workspace" className="atlas-workspace"><div key={path} className="page-arrival">{children}</div></div>
+    <footer className="maison-footer"><div className="footer-topline"><p>THE ART OF INDIVIDUALITY.</p><span>PRIVATE BY DESIGN.</span></div><Link className="footer-wordmark" href="/" aria-label="FaceIQ home">faceiq<span>.</span></Link><div className="footer-bottomline"><p>An independent study of the face.<br/>On your device. On your terms.</p><nav aria-label="Footer navigation"><Link href="/about">About & privacy</Link><Link href="/guide">Photo notes</Link><Link href="/settings">Settings & backups</Link></nav><span>FREEHARMONY / AGPL-3.0<br/>THE PRIVATE EDITION © 2026</span></div></footer>
   </div>;
 }

@@ -229,3 +229,20 @@ repository permissions, pinned official checkout/setup-node actions, a 15-minute
 timeout and the same frozen install, type checks, tests and hosted build. The
 new source validation passed 154 tests and all workspace type checks. Clean-
 checkout build and GitHub push verification are recorded locally in .security.
+
+## Campaign design update — 2026-10-22
+
+The interface now includes two original generated portraits of fictional adults.
+They are campaign artwork, not customer photographs or measurement results. The
+homepage identifies its geometry preview as illustrative. Both images are stored
+locally as WebP files (under 160 kB combined); their complete generation prompts
+and provenance are tracked in apps/web/public/images/credits.json. No reference
+brand's photographs, videos, logos or source code were copied into the product.
+
+No package or remote runtime service was added. Animation uses CSS and the
+browser's existing APIs, respects reduced motion, and includes a portrait pause
+control. Defender's custom scan of the new image directory completed with no
+threats found. The updated source passes the existing 154 tests and the Vercel
+production build. Browser QA covers desktop/mobile navigation, portrait controls,
+front and profile drafts, and report access using fictional test imagery on the
+separate test origin; the user's localhost:3000 history was not seeded.

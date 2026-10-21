@@ -25,9 +25,14 @@ Use the same browser and the exact same address to keep your history together.
 
 ## What is included
 
-- The Private Atlas: warm editorial typography, original anatomical plates, a
-  model-agency inspired contact sheet and a personal dossier with a strengths-first
-  reading. Fonts and illustrations are self-hosted.
+- The Private Atlas: an immersive portrait campaign, centered wordmark, fullscreen
+  editorial navigation, interactive front/profile study and layered personal dossiers.
+  The warm ivory, charcoal and rust palette continues throughout the working studio.
+  Original fictional campaign portraits, fonts and illustrations are self-hosted;
+  image prompts and provenance are in `apps/web/public/images/credits.json`.
+- Restrained motion: slow portrait movement with a pause control, image crossfades,
+  scroll reveals, contour drawing, measurement counts and tactile dossier transitions.
+  Keyboard navigation and the system's reduced-motion preference are supported.
 - **71 named measurements: 36 front + 35 side**, covering all current public
   FaceIQ measurement guides, including five supporting definitions.
 - Automatic landmark drafts for both front and profile photos. The existing
@@ -72,7 +77,7 @@ validated beauty thresholds or clinical targets.
 
 ## Create a complete report
 
-1. Choose **New study** and select a front photograph or use the camera. The
+1. Choose **Begin a study** and select a front photograph or use the camera. The
    models suggest landmarks automatically, then show a count of image-based and
    inferred positions. Open the dossier to see the report.
 2. Use **Check priority points** to inspect inferred and missing details. Move
