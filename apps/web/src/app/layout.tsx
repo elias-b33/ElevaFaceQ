@@ -3,6 +3,7 @@ import { AppFrame } from "@/components/AppFrame";
 import "./globals.css";
 import "./atlas.css";
 import "./campaign.css";
+import "./interiors.css";
 
 export const metadata: Metadata = {
   title: { default: "FaceIQ — The Private Atlas", template: "%s | Local FaceIQ" },

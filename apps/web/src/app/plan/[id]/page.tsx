@@ -45,7 +45,7 @@ export default function PlanPage({ params }: { params: Promise<{ id: string }> }
   }
 
   return (
-    <main className="mx-auto w-full max-w-xl px-5 py-6 flex flex-col gap-5">
+    <main className="plan-studio mx-auto w-full max-w-xl px-5 py-6 flex flex-col gap-5">
       <header className="flex items-center justify-between">
         <Link href={`/results/${scan.id}`} className="text-sm text-ink-2 hover:text-ink">
           ← Results

@@ -246,3 +246,19 @@ threats found. The updated source passes the existing 154 tests and the Vercel
 production build. Browser QA covers desktop/mobile navigation, portrait controls,
 front and profile drafts, and report access using fictional test imagery on the
 separate test origin; the user's localhost:3000 history was not seeded.
+
+## Interior interface refinement — 2026-10-22
+
+The working pages now share a scoped interior style system and accessible page
+headers. The measurement library retains the full catalogue and every formula,
+landmark list, caution, adaptation and source link, with indexed expansion and
+front/profile/region/search controls. Collection framing uses existing face-crop
+geometry only for display; stored photos and measurement coordinates are not
+rewritten. Comparison choices include study numbers and capture times.
+
+Backup validation/merging, local AI request restrictions, report exports, photo
+checks and measurement computation remain on their existing code paths. The
+data-deletion confirmation is retained. No dependency, model, font, external
+image or runtime service was added. The campaign homepage source and stylesheet
+were preserved. Browser checks use a separate local QA origin and fictional or
+public test imagery; no test analysis was added to the user's normal origin.

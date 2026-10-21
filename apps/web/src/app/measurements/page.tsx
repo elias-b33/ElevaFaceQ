@@ -1,24 +1,34 @@
 "use client";
 
-import { useState } from "react";
-import Link from "next/link";
+import { useRef, useState } from "react";
 import { FRONT_LANDMARKS, HARMONY_CATALOG, REFERENCE_NOTE, SIDE_LANDMARKS } from "@freeharmony/engine";
+import { StudioArrow, StudioPageHeader } from "@/components/StudioPageHeader";
+import { AnatomyPlate } from "@/components/AnatomyPlate";
 
 export default function MeasurementLibrary() {
+  const regionNav=useRef<HTMLElement>(null);
   const [query, setQuery] = useState("");
-  const [view, setView] = useState("all");
+  const [view, setView] = useState("front");
   const [group, setGroup] = useState("all");
-  const groups = [...new Set(HARMONY_CATALOG.filter(d => view === "all" || d.view === view).map(d => d.group))];
-  const visible = HARMONY_CATALOG.filter(d => (view === "all" || d.view === view) && (group === "all" || d.group === group) && `${d.label} ${d.formula} ${d.explanation}`.toLowerCase().includes(query.toLowerCase()));
-  return <main className="definition-library">
-    <header className="library-heading"><p className="eyebrow">YOUR MEASUREMENT FIELD GUIDE</p><h1>Every measurement. No mystery.</h1><p>Explore all 71 public definitions: 36 front and 35 side, including five supporting measurements. Read the formula, check the points, and understand what can change the result.</p><Link href="/scan" className="text-button mt-4">Start your own report →</Link></header>
-    <div className="measurement-filters"><input type="search" aria-label="Search measurement definitions" value={query} onChange={e => setQuery(e.target.value)} placeholder="Find midface, E-line, gonial angle…"/><select aria-label="Definition view" value={view} onChange={e => { setView(e.target.value); setGroup("all"); }}><option value="all">Front & side</option><option value="front">Front · 36</option><option value="side">Side · 35</option></select><select aria-label="Definition region" value={group} onChange={e => setGroup(e.target.value)}><option value="all">All regions</option>{groups.map(g => <option key={g}>{g}</option>)}</select></div>
-    <p className="definition-count">{visible.length} definitions · Geometry runs offline · Source links open externally only when you choose them</p>
-    <div className="definition-grid">{visible.map(def => {
-      const points = def.view === "front" ? FRONT_LANDMARKS : SIDE_LANDMARKS;
-      return <article className="definition-card card" key={def.key}><span className="eyebrow">{def.view} · {def.group}{def.supporting ? " · SUPPORTING" : ""}</span><h2>{def.label}</h2><p>{def.explanation}</p><div className="formula-box"><span>FORMULA</span><p>{def.formula}</p></div><details><summary>Landmarks & limits</summary><ul>{def.required.map(key => <li key={key}>{points.find(p => p.key === key)?.label ?? key}</li>)}</ul><p>{def.caution}</p>{def.adaptation && <p className="adaptation-note">Local adaptation: {def.adaptation}</p>}</details><a href={def.source} target="_blank" rel="noreferrer">Public definition ↗</a></article>;
-    })}</div>
-    {!visible.length && <p className="filter-empty">No definitions match these filters.</p>}
-    <p className="reference-note">{REFERENCE_NOTE} The overview and detailed guide at FaceIQ currently use different counts. This local catalogue includes every definition in its detailed index and does not reproduce its private scoring model.</p>
+  const [expanded, setExpanded] = useState<string | null>(HARMONY_CATALOG[0]?.key ?? null);
+  const selectedView = HARMONY_CATALOG.filter(d => view === "all" || d.view === view);
+  const groups = [...new Set(selectedView.map(d => d.group))];
+  const visible = selectedView.filter(d => (group === "all" || d.group === group) && (d.label + " " + d.formula + " " + d.explanation).toLowerCase().includes(query.toLowerCase()));
+  const regions = groups.filter(region => visible.some(d => d.group === region));
+  return <main className="studio-page atlas-library">
+    <StudioPageHeader section="The face atlas" title={<>The face atlas<span className="title-stop">.</span></>} description="A closer understanding of your features. Explore the geometry, the landmarks and the thinking behind every measurement." action={{href:"/scan",label:"Begin your own study"}}/>
+    <div className="library-toolbar"><div className="studio-view-control" role="group" aria-label="Definition view">{[["front","En face","36"],["side","In profile","35"],["all","Complete atlas","71"]].map(([value,label,count]) => <button key={value} aria-pressed={view === value} onClick={() => { setView(value); setGroup("all"); setExpanded(null); regionNav.current?.scrollTo({left:0,behavior:"auto"}); }}><span>{label}</span><sup>{count}</sup></button>)}</div><label className="library-search"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="10" cy="10" r="6" stroke="currentColor" strokeWidth="1.3"/><path d="m15 15 5 5" stroke="currentColor" strokeWidth="1.3"/></svg><input type="search" aria-label="Search measurement definitions" placeholder="Find a measurement" value={query} onChange={e => { setQuery(e.target.value); setExpanded(null); }}/>{query && <button onClick={() => setQuery("")} aria-label="Clear measurement search">×</button>}</label></div>
+    <div className="library-layout">
+      <aside className="library-index"><div className="library-index-inner"><p className="studio-overline">EXPLORE BY REGION</p><nav ref={regionNav} aria-label="Measurement regions"><button aria-pressed={group === "all"} onClick={() => { setGroup("all"); setExpanded(null); }}><span>All regions</span><span>{selectedView.length}</span></button>{groups.map(region => <button key={region} aria-pressed={group === region} onClick={() => { setGroup(region); setExpanded(null); }}><span>{region}</span><span>{selectedView.filter(d => d.group === region).length}</span></button>)}</nav><div className="library-study-plate"><AnatomyPlate view={view === "side" ? "side" : "front"}/><span>{view === "side" ? "II / THE PROFILE" : "I / EN FACE"}</span></div><p className="library-index-note">Every formula is open to inspection.<br/>Every landmark can be refined.</p></div></aside>
+      <div className="library-entries"><div className="library-result-line"><span>{view === "front" ? "THE FRONT PERSPECTIVE" : view === "side" ? "THE PROFILE PERSPECTIVE" : "BOTH PERSPECTIVES"}</span><span role="status">{visible.length} {visible.length === 1 ? "measurement" : "measurements"}</span></div>
+        {regions.map((region,regionIndex) => <section className="definition-section" key={region} aria-label={region}><header><span>{String(regionIndex + 1).padStart(2,"0")}</span><h2>{region}</h2></header>{visible.filter(def => def.group === region).map(def => {
+          const points = def.view === "front" ? FRONT_LANDMARKS : SIDE_LANDMARKS;
+          const open = expanded === def.key;
+          return <article className={"definition-entry" + (open ? " is-open" : "")} key={def.key}><h3><button onClick={() => setExpanded(open ? null : def.key)} aria-expanded={open} aria-controls={"definition-" + def.key}><span className="definition-number">{String(HARMONY_CATALOG.indexOf(def) + 1).padStart(2,"0")}</span><span className="definition-title">{def.label}</span><span className="definition-view">{def.view === "front" ? "EN FACE" : "PROFILE"}</span><span className="definition-toggle" aria-hidden="true">{open ? "−" : "+"}</span></button></h3>{open && <div className="definition-detail" id={"definition-" + def.key}><div className="definition-reading"><p>{def.explanation}</p><div className="definition-equation"><span className="studio-overline">THE CALCULATION</span><p>{def.formula}</p></div>{def.supporting && <span className="supporting-label">Supporting measurement</span>}<a href={def.source} target="_blank" rel="noreferrer" className="studio-inline-link">Read the source definition<StudioArrow diagonal/></a></div><div className="definition-landmarks"><p className="studio-overline">POINTS IN THE STUDY</p><ul>{def.required.map(key => <li key={key}>{points.find(p => p.key === key)?.label ?? key}</li>)}</ul><details><summary>Measurement notes <span>+</span></summary><p>{def.caution}</p>{def.adaptation && <p>Local construction: {def.adaptation}</p>}</details></div></div>}</article>;
+        })}</section>)}
+        {!visible.length && <div className="studio-empty-search"><span>NO MATCHES</span><h2>A different point of view?</h2><p>Try another term, region or perspective.</p><button className="studio-inline-link" onClick={() => {setQuery("");setGroup("all");}}>Clear search & filters <StudioArrow/></button></div>}
+        <details className="library-method"><summary>About this measurement catalogue <span>+</span></summary><p>{REFERENCE_NOTE}</p><p>This catalogue includes 36 front and 35 profile definitions, including five supporting measurements. The public overview and detailed guide use different counts; the catalogue follows the detailed index. It does not reproduce private scoring weights.</p></details>
+      </div>
+    </div>
   </main>;
 }

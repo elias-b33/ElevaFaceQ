@@ -33,6 +33,10 @@ Use the same browser and the exact same address to keep your history together.
 - Restrained motion: slow portrait movement with a pause control, image crossfades,
   scroll reveals, contour drawing, measurement counts and tactile dossier transitions.
   Keyboard navigation and the system's reduced-motion preference are supported.
+- A consistent working studio: an indexed measurement library with expandable
+  formulas, region and perspective filters; a photograph-led collection; numbered
+  workspace settings; chapter-based photo/privacy guides; and quieter capture,
+  landmark and report controls. The campaign landing page keeps its own layout.
 - **71 named measurements: 36 front + 35 side**, covering all current public
   FaceIQ measurement guides, including five supporting definitions.
 - Automatic landmark drafts for both front and profile photos. The existing
