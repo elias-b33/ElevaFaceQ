@@ -17,7 +17,7 @@ import {
   standardizedOverall,
 } from "./scoring/norms";
 
-export const ENGINE_VERSION = "0.1.0";
+export const ENGINE_VERSION = "0.1.0-local.1";
 
 const EMPTY_AREAS: Record<AreaKey, { score: null; confidence: number }> = {
   symmetry: { score: null, confidence: 0 },
@@ -195,6 +195,7 @@ export type {
 } from "./profile";
 export { CANONICAL_VERTS } from "./landmarks/canonical";
 export { regionalResiduals } from "./procrustes";
+export * from "./harmony/index";
 export {
   estimatePose,
   eulerFromMatrix,

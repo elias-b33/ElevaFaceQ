@@ -64,8 +64,7 @@ export function AiCheckCard({
     return (
       <div className="card px-5 py-4 text-sm text-ink-2 flex items-center justify-between gap-3">
         <span>
-          Want an AI cross-check of this scan? Connect your own provider — we
-          never see your photo.
+          Optional: review this scan with a local Ollama model on this computer.
         </span>
         <Link href="/settings" className="shrink-0 text-gold">
           Set up →

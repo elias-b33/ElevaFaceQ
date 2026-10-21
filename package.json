@@ -1,11 +1,16 @@
 {
-  "name": "freeharmony",
+  "name": "local-faceiq",
   "private": true,
   "scripts": {
-    "dev": "pnpm --filter web dev",
-    "build": "pnpm --filter web build",
+    "dev": "node scripts/run-local.mjs dev",
+    "start": "node scripts/run-local.mjs start",
+    "build": "node scripts/run-local.mjs build",
+    "build:vercel": "pnpm --filter web build",
+    "setup:assets": "node apps/web/scripts/prepare-assets.mjs",
+    "security:audit": "pnpm audit",
     "test": "pnpm -r test",
     "typecheck": "pnpm -r typecheck"
   },
-  "packageManager": "pnpm@9.15.9"
+  "packageManager": "pnpm@11.25.0",
+  "engines": { "node": "24.x" }
 }

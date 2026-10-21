@@ -1,4 +1,12 @@
+.git/
+.security/
+.env*
+.vercel/
+node_modules/
+**/node_modules/
+.next/
+**/.next/
 calibration/
 clavicular-research/
-.git/
-node_modules/
+**/__pycache__/
+*.tsbuildinfo

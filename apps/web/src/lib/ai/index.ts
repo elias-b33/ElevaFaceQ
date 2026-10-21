@@ -18,7 +18,7 @@ import {
   type ScanConfidence,
 } from "./schema";
 
-export { loadAiConfig, saveAiConfig, DEFAULT_AI_CONFIG } from "./config";
+export { canUseLocalAi, loadAiConfig, saveAiConfig, DEFAULT_AI_CONFIG } from "./config";
 export type { AiConfig, AiProviderKind } from "./config";
 export { preflightOllama } from "./providers";
 export type { OllamaPreflight } from "./providers";
@@ -69,7 +69,7 @@ function extractJson(text: string): unknown {
   return JSON.parse(text.slice(start, end + 1));
 }
 
-const CACHE_KEY = "fh.ai.cache.v1";
+const CACHE_KEY = "faceiq.ai.cache.v1";
 
 function cacheGet(key: string): SanityAnnotation | null {
   try {
@@ -104,7 +104,7 @@ export async function runSanityCheck(scan: StoredScan): Promise<SanityAnnotation
 
   const payload = buildMeasurementPayload(scan.result);
   const key = stableHash(
-    scan.photo.length + ":" + scan.photo.slice(-64) + payload + cfg.provider + cfg.claudeModel + cfg.ollamaModel,
+    scan.photo.length + ":" + scan.photo.slice(-64) + payload + cfg.provider + cfg.ollamaModel,
   );
   const cached = cacheGet(key);
   if (cached) return cached;
@@ -136,7 +136,7 @@ Evaluate per your instructions and answer with the JSON object only.`;
   const annotation: SanityAnnotation = {
     check,
     ...reconcile(scan.result.overall, check),
-    model: cfg.provider === "claude" ? cfg.claudeModel : cfg.ollamaModel,
+    model: cfg.ollamaModel,
     at: Date.now(),
   };
   cachePut(key, annotation);
@@ -145,8 +145,7 @@ Evaluate per your instructions and answer with the JSON object only.`;
 
 /**
  * AI-worded summary for the top of the results screen. Text-only — runs on
- * the lightweight local model (no photo leaves the page for this one even
- * with a cloud provider... it's numbers only).
+ * the lightweight local model. This request only includes measured numbers.
  */
 export async function runAiSummary(scan: StoredScan): Promise<DeepReport> {
   const cfg = loadAiConfig();
@@ -163,7 +162,7 @@ export async function runAiSummary(scan: StoredScan): Promise<DeepReport> {
 
   return {
     text: text.trim(),
-    model: cfg.provider === "claude" ? cfg.claudeModel : cfg.ollamaTextModel,
+    model: cfg.ollamaTextModel,
     at: Date.now(),
   };
 }
@@ -207,7 +206,7 @@ Write the report.`;
 
   return {
     text,
-    model: cfg.provider === "claude" ? cfg.claudeModel : cfg.ollamaModel,
+    model: cfg.ollamaModel,
     at: Date.now(),
   };
 }

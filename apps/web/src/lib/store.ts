@@ -5,11 +5,12 @@ import type {
   ProfileMetricResult,
   ScanResult,
   Sex,
+  HarmonySettings,
 } from "@freeharmony/engine";
 import type { StoredInput } from "./scan";
 
-// All persistence is localStorage — nothing ever leaves the device unless the
-// user explicitly opts in to an AI provider call.
+// Photos and measurements are kept in this browser. The optional AI path only
+// accepts a local Ollama service; nothing here uploads data.
 
 export interface Profile {
   onboarded: boolean;
@@ -49,10 +50,14 @@ export interface StoredScan {
   result: ScanResult;
   /** JPEG data URL, long edge ≤ 768. */
   photo: string;
+  /** Original photo aspect, including manual scans without a detected face. */
+  imageAspect?: number;
   /** Raw landmarks etc. for re-analysis (Adjust Points, profile changes). */
   input?: StoredInput;
   /** Landmark overrides the user applied via Adjust Points. */
   overrides?: Record<number, { x: number; y: number }>;
+  /** Versioned, named 70+ measurement landmarks; legacy geometry is preserved. */
+  measurements?: HarmonySettings;
   /** Optional AI annotations — never part of the score itself. */
   ai?: {
     sanity?: import("./ai/schema").SanityAnnotation;
@@ -65,6 +70,7 @@ export interface StoredScan {
     anchors: ProfileAnchors;
     results: ProfileMetricResult[];
     at: number;
+    imageAspect?: number;
   };
 }
 
@@ -74,12 +80,12 @@ export function updateScan(id: string, patch: Partial<StoredScan>): StoredScan |
   if (idx === -1) return undefined;
   const next = { ...scans[idx]!, ...patch };
   scans[idx] = next;
-  localStorage.setItem(SCANS_KEY, JSON.stringify(scans));
+  persistScans(scans);
   return next;
 }
 
-const PROFILE_KEY = "fh.profile.v1";
-const SCANS_KEY = "fh.scans.v1";
+export const PROFILE_KEY = "faceiq.profile.v1";
+export const SCANS_KEY = "faceiq.scans.v1";
 const MAX_SCANS = 40;
 
 export function loadProfile(): Profile {
@@ -113,13 +119,24 @@ export function getScan(id: string): StoredScan | undefined {
 }
 
 export function saveScan(scan: StoredScan): void {
-  const scans = [scan, ...loadScans()].slice(0, MAX_SCANS);
+  const existing = loadScans();
+  const index = existing.findIndex(item => item.id === scan.id);
+  if (index !== -1) {
+    existing[index] = scan;
+    persistScans(existing);
+    return;
+  }
+  if (existing.length >= MAX_SCANS) {
+    throw new Error("Your local history has 40 analyses. Export a backup and delete an older scan before adding another.");
+  }
+  persistScans([scan, ...existing]);
+}
+
+export function persistScans(scans: StoredScan[]): void {
   try {
     localStorage.setItem(SCANS_KEY, JSON.stringify(scans));
   } catch {
-    // Quota exceeded — drop oldest photos and retry once.
-    const slim = scans.map((s, i) => (i > 5 ? { ...s, photo: "" } : s));
-    localStorage.setItem(SCANS_KEY, JSON.stringify(slim));
+    throw new Error("Browser storage is full. Export a backup, then remove an older analysis. Your existing photos have been kept.");
   }
 }
 
@@ -132,7 +149,7 @@ export function deleteScan(id: string): void {
 
 export function nukeAllData(): void {
   for (const key of Object.keys(localStorage)) {
-    if (key.startsWith("fh.")) localStorage.removeItem(key);
+    if (key.startsWith("faceiq.")) localStorage.removeItem(key);
   }
 }
 

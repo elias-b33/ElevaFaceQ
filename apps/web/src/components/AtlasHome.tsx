@@ -1,0 +1,25 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { analyzeHarmony, FRONT_MEASUREMENT_COUNT, SIDE_MEASUREMENT_COUNT } from "@freeharmony/engine";
+import { loadScans, type StoredScan } from "@/lib/store";
+import { scanDocuments } from "@/lib/harmony";
+import { AnatomyPlate } from "./AnatomyPlate";
+
+export function AtlasHome() {
+  const [scans, setScans] = useState<StoredScan[]>([]);
+  useEffect(() => setScans(loadScans()), []);
+  const last = scans[0], settings = last ? scanDocuments(last) : undefined;
+  const front = analyzeHarmony("front", settings?.front, settings), side = analyzeHarmony("side", settings?.side, settings);
+  return <main className="atlas-home">
+    <div className="edition-line"><span>THE FACE ATLAS / VOL. 01</span><span>PERSONAL STUDIES IN FORM & PROPORTION</span><span>YOUR PRIVATE EDITION</span></div>
+    <section className="atlas-cover">
+      <div className="cover-copy"><p className="eyebrow"><span className="rust-line"/> A CLOSER LOOK, A NEW PERSPECTIVE</p><h1>Distinctly<br/><em>you.</em></h1><p className="cover-deck">Every face has a signature.<br/>Get to know yours.</p><p className="cover-description">An intimate study of your features, proportions and presence. Two views. 71 measurements. A personal dossier, made entirely on your device.</p><div className="cover-actions"><Link href="/scan" className="primary-button">Begin your study <span>↗</span></Link><Link href="/measurements" className="text-button">Explore the atlas <span>↗</span></Link></div><div className="cover-endnote"><span className="tiny-cross">+</span> NO ACCOUNT. NO SUBSCRIPTION. JUST YOU.</div></div>
+      <div className="cover-art"><div className="art-topline"><span>STUDIES IN INDIVIDUALITY</span><span>FIG. 001 — 002</span></div><div className="contact-sheets"><figure className="contact-front"><div className="plate-paper"><AnatomyPlate/></div><figcaption><b>I.</b><span>EN FACE<small>Proportion & balance</small></span><span>36</span></figcaption></figure><figure className="contact-side"><div className="plate-paper"><AnatomyPlate view="side"/></div><figcaption><b>II.</b><span>PROFIL<small>Contour & character</small></span><span>35</span></figcaption></figure></div><span className="art-vertical">THE BEAUTY IS IN THE DETAILS.</span><div className="art-caption"><span>71 WAYS TO SEE THE WHOLE PICTURE</span><span className="art-stamp">F.<small>PRIVATE<br/>EDITION</small></span></div></div>
+    </section>
+    <section className="atlas-index-strip"><p>More perspective.<br/><em>More possibility.</em></p><div><strong>{FRONT_MEASUREMENT_COUNT}</strong><span>Front measurements</span></div><div><strong>{SIDE_MEASUREMENT_COUNT}</strong><span>Profile measurements</span></div><div><strong>01</strong><span>Individual. You.</span></div><div><span className="local-orbit">↗</span><span>Automatic landmarks<br/>Local vision models</span></div></section>
+    <section className="studio-edit"><div className="studio-edit-heading"><p className="eyebrow">YOUR PRIVATE COLLECTION</p><h2>The studio <em>edit.</em></h2><Link href="/progress" className="text-button">View all dossiers ({scans.length}) ↗</Link></div><div className="studio-edit-content">{last ? <Link className="dossier-preview" href={`/results/${last.id}`}><div className="dossier-thumb">{last.photo && <img src={last.photo} alt="Your latest front study"/>}<span>STUDY {String(scans.length).padStart(2,"0")}</span></div><div><span className="folio">{new Date(last.createdAt).toLocaleDateString(undefined, {day:"numeric",month:"long",year:"numeric"})}</span><h3>Your signature, in focus.</h3><p>{front.available + side.available} measurements available · {last.side ? "Front & profile" : "Front study"}</p><span className="dossier-open">Open your dossier ↗</span></div></Link> : <div className="collection-empty"><span className="collection-number">N° 01</span><div><h3>The first page is yours.</h3><p>Your photographs, your measurements, your perspective.<br/>Start a study to open your personal collection.</p><Link href="/scan" className="text-button">Create your first dossier ↗</Link></div></div>}<aside className="atelier-note"><span className="folio">FROM THE ATELIER</span><h3>Considered.<br/>Down to the detail.</h3><p>Automatic front and profile landmarks. Transparent geometry. A complete report you can refine, revisit and keep.</p><Link href="/guide">The art of a good photograph <span>↗</span></Link></aside></div></section>
+    <section className="atlas-process"><p className="eyebrow">A LITTLE RITUAL. A FRESH PERSPECTIVE.</p><div>{[["01","Find your light.","A clear photograph. Eye-level framing. Your natural expression."],["02","Meet your proportions.","Local models suggest the points. Check the highlighted details."],["03","Keep your perspective.","Read your report, explore your strengths and build your collection."]].map(([n,title,body])=><article key={n}><span>{n}</span><div><h3>{title}</h3><p>{body}</p></div></article>)}</div></section>
+  </main>;
+}

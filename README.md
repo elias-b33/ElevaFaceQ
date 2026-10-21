@@ -1,56 +1,193 @@
-# FreeHarmony
+# Local FaceIQ
 
-**Free, open-source facial harmony analysis. Every metric. No paywall. Ever.**
+Your personal, local fork of [FreeHarmony](https://github.com/Blueturboguy07/freeharmony).
+No account, subscription, paid API, photo upload or hosted deployment is needed.
 
-FreeHarmony measures your facial proportions — canthal tilt, midface ratio, jaw-to-cheekbone
-width, symmetry, and a dozen more — using real landmark geometry that runs entirely in your
-browser. It exists because the app it replaces charges $4.99/week to show you numbers your
-own webcam already computed, teases you with a flattering fake score, and then reveals a
-lower "real" one when you decline to pay.
+## Deploy your hosted version
 
-We think that's garbage. So:
+The source is configured for Vercel. Import **elias-b33/facelab**, choose
+**apps/web** as the Root Directory and use the Next.js preset. Build/install
+commands are in apps/web/vercel.json; no API keys or database are required.
+See [DEPLOYMENT.md](DEPLOYMENT.md) for the exact settings and verification steps.
+Photos and measurement still run in each visitor's browser. Browser histories
+are separate for localhost, Vercel previews and your production domain.
 
-- **Everything is free.** Every metric, every sub-score, the full report, side profile,
-  scan history. There is no Pro tier because there is no tier.
-- **The score is math, and only math.** Deterministic geometry from MediaPipe face
-  landmarks. Same photo in, same score out — auditable in `packages/engine`, which has no
-  dependencies and 100% reproducible tests.
-- **Your face never leaves your device.** Landmarking and scoring are fully client-side.
-  The only thing that can ever leave your browser: an AI second-opinion call to a provider
-  *you* configure (your local Ollama, or your own Claude key). Off by default.
-- **No dark patterns.** One honest score, shown once. If your photo is too blurry or
-  turned too far, we tell you to retake it instead of guessing.
+## Open the app
 
-## How scoring works
+Double-click **Start Local FaceIQ.cmd** in this folder. Keep its console window
+open, then visit **http://127.0.0.1:3000** in your browser. Press Ctrl+C in the
+console to stop it. The server binds to the loopback address, so it is not
+exposed to other devices on your network. Dependencies, the face model and the
+production build have been prepared in this installation.
 
-1. MediaPipe Face Landmarker (WASM, in-browser) finds 478 facial landmarks.
-2. `packages/engine` normalizes them (de-mirror, pixel-space, roll-correction) and refuses
-   photos it can't measure honestly (excessive yaw/pitch, blur, occlusion, closed eyes).
-3. Seventeen metrics are computed from published facial-aesthetics conventions, each scored
-   against an ideal band with a smooth falloff curve, then rolled up into four area scores
-   and one Harmony %.
-4. Optionally, a vision model you control cross-examines the landmarks ("did the jaw point
-   land on an ear?") and can flag a scan as unreliable — it can never change the score.
+Use the same browser and the exact same address to keep your history together.
+`localhost:3000`, `127.0.0.1:3000` and another browser have separate browser storage.
 
-Scores are photo-based estimates for entertainment and self-improvement, not clinical
-measurements — lighting, lens distance, and pose all move the numbers. The app says this
-in-product, and the advice engine hard-refuses surgical/medication coaching and actively
-discourages dangerous community practices.
+## What is included
+
+- The Private Atlas: warm editorial typography, original anatomical plates, a
+  model-agency inspired contact sheet and a personal dossier with a strengths-first
+  reading. Fonts and illustrations are self-hosted.
+- **71 named measurements: 36 front + 35 side**, covering all current public
+  FaceIQ measurement guides, including five supporting definitions.
+- Automatic landmark drafts for both front and profile photos. The existing
+  478-point MediaPipe mesh works alongside a local hair/skin segmenter and
+  image-edge refinement. No new package, paid API or Python service is needed.
+  Failed photo quality checks remain visible, and only suitable front photos
+  receive the original FreeHarmony harmony index.
+- Detailed front and profile reports with formulas, anatomical point lists,
+  construction overlays, placement guidance and explicit missing-data states.
+- A guided editor for 53 front and 27 side landmarks, zoom, keyboard movement,
+  point confirmation, undo and saved review state. A priority review focuses on
+  inferred and missing positions. Existing manual/reviewed points survive a
+  detection rerun. Unplaced and low-evidence points are never measured.
+- Correct image aspect handling, pupil/eye-corner leveling for front views and
+  Frankfort leveling plus mirror handling for side views. The selected metric
+  shows a deterministic ±2-pixel placement sensitivity envelope.
+- Editable working ranges and a descriptive-only mode. Distances use % of face
+  height until you supply an actual measured scale; no face size is assumed.
+- A searchable measurement library, region/status filters, written observations,
+  all-measurement comparisons, CSV and JSON exports, and a self-contained offline
+  HTML report. Print / PDF uses the browser's local print dialog.
+- Validated version-3 JSON backups include automatic provenance, quality labels,
+  named points, review state, scale, notes and custom ranges. Version-1 and
+  version-2 backups and existing scans still open.
+- Original 18 frontal metrics and five legacy profile measures remain in the
+  classic results view, without rewriting the original saved measurements.
+- Optional local Ollama integration, off by default. No cloud AI integration.
+
+Scores inherit FreeHarmony's reference model. They describe photographed
+geometry; this fork does not reproduce FaceIQ Labs' proprietary scores or
+establish a universal attractiveness scale. Keep lighting, distance and head
+position consistent, and review the points before interpreting a change.
+
+The current [public definition index](https://www.faceiqlabs.com/support/harmony)
+contains 71 guides (36 front, 35 side); its overview also says 37 front + 33 side.
+This version implements every definition in the detailed index, rather than
+inventing a measurement to reconcile that discrepancy. The local catalogue,
+formulas, working ranges and declared adaptations are in
+`packages/engine/src/harmony/`. FaceIQ's private score weights, reference corpus
+and AI are not reproduced. Working ranges are editable local conventions, not
+validated beauty thresholds or clinical targets.
+
+## Create a complete report
+
+1. Choose **New study** and select a front photograph or use the camera. The
+   models suggest landmarks automatically, then show a count of image-based and
+   inferred positions. Open the dossier to see the report.
+2. Use **Check priority points** to inspect inferred and missing details. Move
+   any dot, confirm it, and continue. You can also inspect all points and confirm
+   checked usable suggestions together. Left/right refers to the image.
+3. Add a side photo from the dossier. Either facing direction works. The app
+   attempts a profile face mesh and traces the visible silhouette with the local
+   segmentation model and image edges. Ear opening, orbital references, corneal
+   front and jaw tangents are anatomical estimates and need closer review.
+4. Existing reports have **Auto-detect points** / **Detect again** controls.
+   Manual corrections, reviewed positions and a measured scale are kept. Save
+   changes to persist the draft; export includes unsaved edits too.
+5. Export CSV/JSON or download the detailed offline report. Print / PDF creates
+   a local PDF through your browser. Complete photo backups are in Settings.
+
+The draft is useful immediately, with provisional labels. Detection is not a
+claim that every point is exact: hidden/cropped features remain unplaced, weak
+crease suggestions are excluded until confirmed, and a true profile may need
+silhouette-assisted eye and ear estimates when the face mesh cannot lock on.
+
+Millimeter distances require a real known distance in the same image plane.
+Without it, `% FH` means a percentage of marked vertical hairline-to-chin height.
+A reviewed landmark is a user's placement confirmation, not a clinical
+validation. The sensitivity envelope moves one coordinate at a time and is not
+a statistical confidence interval or a bound on all photo error.
+
+## Local data and privacy
+
+Photos, measurements and corrections are stored in browser localStorage. The app
+does not save scans into the project directory or send them to an external
+service. Clearing browser site data removes that browser's history.
+
+Use **Settings & backups → Export backup** before clearing browser data or moving
+to another browser. Restore merges new scan IDs and keeps existing scans. The
+backup includes the core photos, profile, geometry and corrections; optional AI
+annotations and AI caches are excluded. Storage errors preserve existing photos
+and ask you to export/delete manually. History currently allows up to 40 scans;
+the browser's quota may be reached earlier.
+
+This project is inside your OneDrive folder. Source files and exported backups
+saved there may sync under your existing OneDrive settings. Save sensitive
+backups in a location you choose. The app itself does not initiate cloud sync.
 
 ## Development
 
-```sh
-pnpm install
-pnpm dev        # Next.js app at localhost:3000
-pnpm test       # engine unit tests (no browser needed)
+Node.js 24 and pnpm 11 were used for this setup. From this folder:
+
+```powershell
+pnpm dev            # http://127.0.0.1:3000, with live code changes
+pnpm test           # engine, advice and application regression tests
 pnpm typecheck
+pnpm build          # produce the local production build
+pnpm start          # serve the production build on loopback
+pnpm security:audit
 ```
 
-Monorepo layout: `apps/web` (Next.js UI) · `packages/engine` (pure-TS scoring, zero deps,
-zero DOM) · `packages/advice` (templated improvement-plan rules).
+The root launcher disables Next.js telemetry in its child process. There are no
+external fonts, analytics, payment SDKs or cloud inference SDKs. The browser's
+Content Security Policy blocks external resource and API origins. Optional AI
+requests are limited to `localhost:11434` or `127.0.0.1:11434`, reject redirects,
+and reject cloud tags and Ollama entries marked as remote models.
 
-## License
+Ollama is **not installed or started by this app**. If you already run it, enable
+it in Settings, select installed local models and use Check local connection.
+Photo requests occur only when you explicitly choose an AI report/check.
 
-AGPL-3.0. Use it, fork it, ship it — but if you serve a modified version to users, you
-must publish your source. Paywalling a fork of the anti-paywall app should at least be
-embarrassing in public.
+## Reinstalling or moving the project
+
+Initial installation requires internet access for packages and the two public
+vision models. Regular use after setup requires no internet connection.
+
+```powershell
+pnpm install --frozen-lockfile --ignore-scripts
+pnpm setup:assets
+pnpm security:audit
+pnpm build
+pnpm start
+```
+
+The reviewed asset setup copies MediaPipe's installed WASM files and downloads
+the pinned version-1 face and SelfieMulticlass models from Google's official
+storage only if missing. Their SHA-256 hashes are checked before use. Starting the app never downloads anything.
+The workspace configuration disables install lifecycle scripts and enables
+package-store integrity checking; `.npmrc` also retains these settings for older
+pnpm versions. Review and scan new dependencies before changing the lockfile.
+
+## Security review and attribution
+
+See [SECURITY_REVIEW.md](SECURITY_REVIEW.md) for the upstream revision, scans,
+dependency updates, integrity checks, verification and limits. Machine-specific raw audit results
+are kept locally in the ignored `.security/` folder. Microsoft Defender is not bundled with the app.
+
+Based on FreeHarmony by Blueturboguy07, upstream revision
+`fa54d317dfaf762d8abbaa70d752a5a1fa92f242`, retrieved on 2026-10-21. Original
+license: **AGPL-3.0**, retained in [LICENSE](LICENSE). This is a modified personal
+fork, with the original Git history and upstream remote preserved. It is not
+affiliated with FaceIQ Labs.
+
+
+## Automatic vision assets and typography
+
+The contour model is Google MediaPipe SelfieMulticlass 256×256 float32, version 1
+(Apache-2.0; 16.4 MB). It predicts background, hair, body skin, face skin, clothing
+and accessories, and supplies a draft contour rather than bony anatomy. The
+[official model card](https://storage.googleapis.com/mediapipe-assets/Model%20Card%20Multiclass%20Segmentation.pdf)
+and [Image Segmenter documentation](https://ai.google.dev/edge/mediapipe/solutions/vision/image_segmenter)
+describe its intended use and limitations.
+
+SHA-256: c6748b1253a99067ef71f7e26ca71096cd449baefa8f101900ea23016507e0e0.
+The original 3.8 MB Face Landmarker model remains unchanged. Both model hashes
+are verified by the local launcher; it downloads nothing during startup.
+
+Instrument Serif Regular and Italic come from Google's official fonts repository,
+under the SIL Open Font License. The complete license is retained at
+apps/web/public/fonts/OFL.txt. Exact source URLs and hashes are recorded in
+.security/editorial-fonts.json. Models and fonts were quarantined and scanned
+with Microsoft Defender before they were copied into the application. There
+were no package installs or lockfile changes for this upgrade.

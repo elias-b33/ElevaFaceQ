@@ -7,3 +7,12 @@ node_modules
 apps/web/public/mediapipe/
 calibration/.venv/
 calibration/landmarks*.jsonl
+# Machine-specific security records, QA photos, backups and quarantined downloads.
+.security/
+
+# Local research data and generated galleries are not application assets.
+__pycache__/
+*.py[cod]
+calibration/reference-library/
+calibration/sample-faces-mebeauty/
+calibration/reference-target.json

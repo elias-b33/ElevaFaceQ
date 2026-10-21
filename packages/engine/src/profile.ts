@@ -136,9 +136,12 @@ export function defaultProfileAnchors(): ProfileAnchors {
   };
 }
 
-export function analyzeProfile(anchors: ProfileAnchors, sex: Sex): ProfileMetricResult[] {
+export function analyzeProfile(anchors: ProfileAnchors, sex: Sex, imageAspect = 1): ProfileMetricResult[] {
+  if (!Number.isFinite(imageAspect) || imageAspect <= 0) throw new Error("Profile image aspect ratio must be positive.");
   const facing = profileFacing(anchors);
-  const a = anchors;
+  // Normalized x and y have different scales on a non-square photo. Restore
+  // equal units before measuring angles and perpendicular distances.
+  const a = Object.fromEntries(Object.entries(anchors).map(([key, point]) => [key, { x: point.x * imageAspect, y: point.y }])) as ProfileAnchors;
 
   const nasofrontal = angleAtDeg(a.nasion, a.glabella, a.pronasale);
   const nasolabial = angleAtDeg(a.subnasale, a.pronasale, a.labialeSup);

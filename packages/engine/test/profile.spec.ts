@@ -22,6 +22,18 @@ function syntheticProfile(): ProfileAnchors {
 }
 
 describe("profile analysis", () => {
+  it("preserves physical angles when the same profile is framed on a non-square image", () => {
+    const original = syntheticProfile();
+    const onWideImage = Object.fromEntries(Object.entries(original).map(([key, point]) => [key, { x: point.x / 2, y: point.y }])) as ProfileAnchors;
+    const square = analyzeProfile(original, "neutral", 1);
+    const wide = analyzeProfile(onWideImage, "neutral", 2);
+    expect(wide).toEqual(square);
+  });
+
+  it("rejects invalid image dimensions rather than producing misleading numbers", () => {
+    expect(() => analyzeProfile(syntheticProfile(), "neutral", 0)).toThrow();
+    expect(() => analyzeProfile(syntheticProfile(), "neutral", Number.NaN)).toThrow();
+  });
   it("detects facing direction", () => {
     const right = syntheticProfile();
     expect(profileFacing(right)).toBe(1);
