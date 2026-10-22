@@ -49,7 +49,7 @@ export function angleAt(f: Frame, v: number, a: number, b: number): number {
   const by = pb.y - pv.y;
   const na = Math.sqrt(ax * ax + ay * ay);
   const nb = Math.sqrt(bx * bx + by * by);
-  if (na === 0 || nb === 0) return 0;
+  if (!Number.isFinite(na) || !Number.isFinite(nb) || na === 0 || nb === 0) return Number.NaN;
   let c = (ax * bx + ay * by) / (na * nb);
   if (c > 1) c = 1;
   if (c < -1) c = -1;

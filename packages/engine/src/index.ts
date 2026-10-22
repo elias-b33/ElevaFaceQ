@@ -17,7 +17,7 @@ import {
   standardizedOverall,
 } from "./scoring/norms";
 
-export const ENGINE_VERSION = "0.1.0-local.1";
+export const ENGINE_VERSION = "0.1.0-local.2";
 
 const EMPTY_AREAS: Record<AreaKey, { score: null; confidence: number }> = {
   symmetry: { score: null, confidence: 0 },
@@ -34,15 +34,19 @@ export function analyze(input: ScanInput): ScanResult {
   const sex = input.sex ?? "neutral";
   const bandProfile = input.bandProfile ?? "faceharmony-parity";
 
-  if (input.landmarks.length !== 468 && input.landmarks.length !== 478) {
+  const missingFace = input.landmarks.length !== 468 && input.landmarks.length !== 478;
+  const invalidImage = !Number.isFinite(input.imageWidth) || !Number.isFinite(input.imageHeight) || input.imageWidth <= 0 || input.imageHeight <= 0;
+  const invalidLandmarks = Array.from(input.landmarks).some(p => !p || !Number.isFinite(p.x) || !Number.isFinite(p.y) || !Number.isFinite(p.z))
+    || Object.values(input.overrides ?? {}).some(p => !p || !Number.isFinite(p.x) || !Number.isFinite(p.y));
+  if (missingFace || invalidImage || invalidLandmarks) {
     const gates: GateReport = {
       pass: false,
       blocking: [
         {
-          code: "no-face",
+          code: missingFace ? "no-face" : invalidImage ? "invalid-image" : "invalid-landmarks",
           severity: "block",
-          message: "No face detected.",
-          retake: "Center your face in the frame with good lighting.",
+          message: missingFace ? "No face detected." : invalidImage ? "The image dimensions are invalid." : "The landmark coordinates contain an invalid number.",
+          retake: missingFace ? "Center your face in the frame with good lighting." : "Select a valid photograph and detect the landmarks again.",
         },
       ],
       warnings: [],
@@ -95,11 +99,17 @@ export function analyze(input: ScanInput): ScanResult {
 
   const pitchUnknown = frame.pitchDeg === null;
   const metrics: MetricResult[] = [];
+  const invalidMetrics: string[] = [];
   const weights: Record<string, { area: AreaKey; weight: number }> = {};
 
   for (const def of METRICS) {
+    weights[def.key] = { area: def.area, weight: def.weight };
     const computed = def.compute(frame, ctx);
     if (computed === null) continue;
+    if (!Number.isFinite(computed.value) || !Number.isFinite(computed.confidence)) {
+      invalidMetrics.push(def.label);
+      continue;
+    }
     let confidence = computed.confidence * gates.confidenceMultiplier;
     const regionCap = gates.regionConfidence[def.region];
     if (regionCap !== undefined) confidence = Math.min(confidence, regionCap);
@@ -108,6 +118,7 @@ export function analyze(input: ScanInput): ScanResult {
 
     const band = resolveBand(def.bands[bandProfile], sex);
     const score = round1(subScore(computed.value, band));
+    if (!Number.isFinite(score)) { invalidMetrics.push(def.label); continue; }
     metrics.push({
       key: def.key,
       label: def.label,
@@ -121,8 +132,13 @@ export function analyze(input: ScanInput): ScanResult {
       percentile: percentileOf(def.key, computed.value),
       detail: computed.detail,
     });
-    weights[def.key] = { area: def.area, weight: def.weight };
   }
+
+  if (invalidMetrics.length) gates.warnings.push({
+    code: "invalid-geometry", severity: "warn",
+    message: `Undefined geometry was excluded: ${invalidMetrics.join(", ")}.`,
+    retake: "Check coincident landmarks and use a level, relaxed front photograph.",
+  });
 
   const agg = aggregate(metrics, weights);
   const refused = agg.overall === null;

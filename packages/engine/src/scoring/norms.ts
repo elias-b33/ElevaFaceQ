@@ -32,6 +32,7 @@ export const NORMS_META = (normsData as { meta: { source: string; faces: number 
  * corpus has been baked in. Deterministic: a static lookup, not a model.
  */
 export function percentileOf(key: string, value: number): number | null {
+  if (!Number.isFinite(value)) return null;
   const t = METRIC_NORMS[key];
   if (!t || t.p.length < 2) return null;
   return interpolate(t.p, t.pcts, value);
@@ -56,7 +57,7 @@ function interpolate(p: number[], pcts: number[], value: number): number {
  * from the corpus score distribution. Null before score-space calibration.
  */
 export function overallPercentileOf(overall: number): number | null {
-  if (!SCORE_STATS) return null;
+  if (!SCORE_STATS || !Number.isFinite(overall)) return null;
   const { p, pcts } = SCORE_STATS.overall;
   if (p.length < 2) return null;
   return interpolate(p, pcts, overall);
@@ -69,7 +70,7 @@ export function overallPercentileOf(overall: number): number | null {
  * "how close to the aesthetic bands" number.
  */
 export function standardizedOverall(overall: number): number | null {
-  if (!SCORE_STATS) return null;
+  if (!SCORE_STATS || !Number.isFinite(overall)) return null;
   const { mean, sd } = SCORE_STATS.overall;
   if (!(sd > 0)) return null;
   const t = 50 + 15 * ((overall - mean) / sd);

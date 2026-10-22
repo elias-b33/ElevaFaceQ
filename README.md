@@ -70,14 +70,20 @@ geometry; this fork does not reproduce FaceIQ Labs' proprietary scores or
 establish a universal attractiveness scale. Keep lighting, distance and head
 position consistent, and review the points before interpreting a change.
 
-The current [public definition index](https://www.faceiqlabs.com/support/harmony)
-contains 71 guides (36 front, 35 side); its overview also says 37 front + 33 side.
-This version implements every definition in the detailed index, rather than
-inventing a measurement to reconcile that discrepancy. The local catalogue,
+The [public definition index](https://www.faceiqlabs.com/support/harmony), checked
+on 22 October 2026, contains 71 guides: 33 front and 33 side definitions used in
+their Harmony score, plus five supporting definitions (36 front, 35 side in total).
+This version implements all 71 as descriptive geometry. The local catalogue,
 formulas, working ranges and declared adaptations are in
 `packages/engine/src/harmony/`. FaceIQ's private score weights, reference corpus
 and AI are not reproduced. Working ranges are editable local conventions, not
 validated beauty thresholds or clinical targets.
+
+The numerical audit and its limits are documented in [MATH_AUDIT.md](MATH_AUDIT.md).
+Every definition has an independent numerical fixture. Seeded transformation
+tests check all values under translation, scaling, rotation, mirroring of a
+profile and changes in image aspect. Missing leveling points, invalid angles
+and insufficient score coverage produce explicit missing/invalid results.
 
 ## Create a complete report
 

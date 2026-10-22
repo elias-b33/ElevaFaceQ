@@ -49,14 +49,15 @@ export function aggregate(
   for (const area of Object.keys(AREA_WEIGHTS) as AreaKey[]) {
     let effSum = 0;
     let scoreSum = 0;
-    let weightSum = 0;
+    // Missing or invalid measurements still consume their expected weight.
+    // Otherwise dropping most of an area could falsely report full coverage.
+    const weightSum = Object.values(weights).reduce((sum, w) => w.area === area && Number.isFinite(w.weight) && w.weight > 0 ? sum + w.weight : sum, 0);
     for (const m of metrics) {
       const w = weights[m.key];
-      if (!w || w.area !== area) continue;
+      if (!w || w.area !== area || !Number.isFinite(w.weight) || w.weight <= 0 || !Number.isFinite(m.value) || !Number.isFinite(m.score) || m.score < 0 || m.score > 100 || !Number.isFinite(m.confidence) || m.confidence < 0 || m.confidence > 1) continue;
       const eff = w.weight * m.confidence;
       effSum += eff;
       scoreSum += eff * m.score;
-      weightSum += w.weight;
     }
     if (weightSum === 0) {
       areas[area] = { score: null, confidence: 0 };

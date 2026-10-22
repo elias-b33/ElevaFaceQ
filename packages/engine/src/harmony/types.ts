@@ -58,6 +58,8 @@ export interface MeasurementDefinition {
   group: string;
   unit: "ratio" | "deg" | "pct" | "distance";
   required: readonly string[];
+  /** Extra face-height endpoints needed only without a valid measured scale. */
+  normalizationOnly?: readonly string[];
   lines: readonly (readonly string[])[];
   formula: string;
   explanation: string;
@@ -73,6 +75,8 @@ export interface HarmonyMeasurement {
   value: number | null;
   unit: string;
   status: "missing" | "invalid" | "provisional" | "reviewed";
+  /** Actual anatomy, leveling and scale dependencies for this result. */
+  required: string[];
   missing: string[];
   unreviewed: string[];
   reason?: string;

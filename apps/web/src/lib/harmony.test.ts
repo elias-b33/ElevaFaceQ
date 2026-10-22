@@ -36,4 +36,17 @@ describe("report migration and private export", () => {
     expect(html.match(/<article>/g)).toHaveLength(71);
     expect(html).toContain("Provisional");
   });
+  it("exports the same actual scale and leveling dependencies as the computed report", () => {
+    const front = seedDocument("front", 1);
+    for (const point of Object.values(front.points)) { point.source = "manual"; point.reviewed = true; }
+    delete front.points.hairline;
+    front.calibration = { from: "cheekL", to: "cheekR", millimeters: 140 };
+    const report = analyzeHarmony("front", front);
+    const result = report.measurements.find(m => m.key === "front.cupid-s-bow-depth")!;
+    expect(result.unit).toBe("mm"); expect(result.status).toBe("reviewed");
+    const html = reportMarkup(scan, { version: 1, front }, [report]);
+    const article = html.split("<article>").find(part => part.startsWith('<div class="print-metric-heading"><h3>Cupid'))!.split("</article>")[0]!;
+    expect(article).toContain("Left pupil center"); expect(article).toContain("Left cheekbone");
+    expect(article).not.toContain("Hairline center");
+  });
 });

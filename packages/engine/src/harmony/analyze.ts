@@ -1,9 +1,27 @@
 import { HARMONY_CATALOG, HARMONY_VERSION } from "./catalog";
 import { FRONT_LANDMARKS, SIDE_LANDMARKS } from "./landmarks";
-import { distance, intersection, midpoint, positive, vector } from "./geometry";
+import { distance, intersection, midpoint, vector } from "./geometry";
 import type { Construction, HarmonyMeasurement, HarmonyReport, HarmonySettings, HarmonyView, MeasurementDefinition, MeasurementDocument, NamedPoint, XY } from "./types";
 
 const usable = (point: NamedPoint | undefined): point is NamedPoint => !!point && point.source !== "template" && (point.reviewed || (point.confidence ?? 1) >= .3) && Number.isFinite(point.x) && Number.isFinite(point.y) && point.x >= 0 && point.x <= 1 && point.y >= 0 && point.y <= 1;
+
+const levelingKeys = (view: HarmonyView, points: Record<string, XY>) => view === "side" ? ["porion", "orbitale"] : points.pupilL && points.pupilR ? ["pupilL", "pupilR"] : ["outerL", "outerR"];
+function dependencies(def: MeasurementDefinition, doc: MeasurementDocument | undefined, levelKeys: string[], calibrated: boolean): string[] {
+  return [...new Set([
+    ...def.required.filter(key => !calibrated || !def.normalizationOnly?.includes(key)),
+    ...levelKeys,
+    ...(calibrated && doc?.calibration && def.unit === "distance" ? [doc.calibration.from, doc.calibration.to] : []),
+  ])];
+}
+/** The same dependency list powers status, perturbations, the editor and exports. */
+export function requiredMeasurementPoints(def: MeasurementDefinition, doc?: MeasurementDocument): string[] {
+  if (doc) try {
+    const geometry = prepareGeometry(def.view, doc);
+    return dependencies(def, doc, geometry.levelKeys, geometry.context.mmPerUnit !== null);
+  } catch { /* Keep the missing/invalid photo editable. */ }
+  const points = Object.fromEntries(Object.entries(doc?.points ?? {}).filter(([, p]) => usable(p)));
+  return dependencies(def, doc, levelingKeys(def.view, points), false);
+}
 
 /** All geometry uses equal image units, then levels to pupils or Frankfort.
  * A left-facing profile is reflected BEFORE rotation so signed results agree. */
@@ -18,7 +36,7 @@ export function prepareGeometry(view: HarmonyView, doc: MeasurementDocument) {
     : original.pronasale && (original.tragus ?? original.nasion) && original.pronasale.x < (original.tragus ?? original.nasion)!.x;
   const facing = view === "side" && facesLeft ? -1 : 1;
   const projected = Object.fromEntries(Object.entries(original).map(([key, p]) => [key, { x: p.x * facing, y: p.y }])) as Record<string, XY>;
-  const levelKeys = view === "side" ? ["porion", "orbitale"] : projected.pupilL && projected.pupilR ? ["pupilL", "pupilR"] : ["outerL", "outerR"];
+  const levelKeys = levelingKeys(view, projected);
   const left = projected[levelKeys[0]!], right = projected[levelKeys[1]!];
   let radians = 0;
   if (left && right) {
@@ -79,8 +97,9 @@ export function prepareGeometry(view: HarmonyView, doc: MeasurementDocument) {
   return { context, roll: left && right ? radians * 180 / Math.PI : null, unproject, levelKeys };
 }
 
-function calculate(def: MeasurementDefinition, doc: MeasurementDocument): number {
+function calculate(def: MeasurementDefinition, doc: MeasurementDocument, calibrated: boolean): number {
   const { context } = prepareGeometry(def.view, doc);
+  if (def.unit === "distance" && (context.mmPerUnit !== null) !== calibrated) throw new Error("The calibration becomes invalid after a small point movement.");
   const value = def.compute(context);
   if (!Number.isFinite(value) || Math.abs(value) > 100_000) throw new Error("The geometry is unstable. Check coincident points and nearly parallel tangents.");
   return value;
@@ -96,16 +115,21 @@ export function analyzeHarmony(view: HarmonyView, doc?: MeasurementDocument, set
   if (view === "front" && !geometry?.context.points.pupil) warnings.push("Place both pupil centers to level the front photo. A corner baseline is used when available.");
   if (view === "side") warnings.push(doc?.automatic ? "Automatic profile placement combines visible contour evidence with anatomical estimates. Check the ear opening, orbital reference and jaw tangents first." : "Position porion and orbitale first to establish the Frankfort reference. Automatic suggestions are available from the photo tools.");
   if (geometry?.roll !== null && geometry?.roll !== undefined && Math.abs(geometry.roll) > 15) warnings.push("The leveling rotation exceeds 15°. Check the reference points and consider a level retake.");
-  if (doc?.calibration && geometry?.context.mmPerUnit === null) warnings.push("The calibration endpoints or distance are invalid. Distance results are shown as % of face height.");
   const calibrated = geometry?.context.mmPerUnit !== null && geometry?.context.mmPerUnit !== undefined;
+  if (doc?.calibration && !calibrated) warnings.push("The calibration endpoints or distance are invalid. Distance results use % of face height, and distance ranges are paused until the scale is repaired or removed.");
   const measurements = definitions.map((def): HarmonyMeasurement => {
-    const reference = settings?.descriptiveOnly ? null : settings?.ranges && Object.hasOwn(settings.ranges, def.key) ? settings.ranges[def.key] ?? null : def.reference ?? null;
+    let reference = settings?.descriptiveOnly ? null : settings?.ranges && Object.hasOwn(settings.ranges, def.key) ? settings.ranges[def.key] ?? null : def.reference ?? null;
+    // A saved mm range cannot be applied to a % FH fallback after scale failure.
+    if (def.unit === "distance" && doc?.calibration && !calibrated) reference = null;
+    if (reference && (!Number.isFinite(reference.lo) || !Number.isFinite(reference.hi) || reference.lo >= reference.hi)) {
+      warnings.push(`The working range for ${def.label} is invalid and was not applied.`);
+      reference = null;
+    }
     const unit = def.unit === "distance" ? calibrated ? "mm" : "% FH" : def.unit === "deg" ? "°" : def.unit === "pct" ? "%" : "×";
-    const levelKeys = geometry?.levelKeys.filter(k => usable(doc?.points[k])) ?? [];
-    const required = [...new Set([...def.required, ...levelKeys, ...(doc?.calibration && def.unit === "distance" ? [doc.calibration.from, doc.calibration.to] : [])])];
+    const required = geometry ? dependencies(def, doc, geometry.levelKeys, calibrated) : requiredMeasurementPoints(def, doc);
     const missing = required.filter(k => !usable(doc?.points[k]));
     const unreviewed = required.filter(k => usable(doc?.points[k]) && !doc!.points[k]!.reviewed);
-    const base = { key: def.key, unit, missing, unreviewed, reference, position: null, sensitivity: null };
+    const base = { key: def.key, unit, required, missing, unreviewed, reference, position: null, sensitivity: null };
     if (!doc || missing.length) return { ...base, value: null, status: "missing" };
     if (error) return { ...base, value: null, status: "invalid", reason: error };
     try {
@@ -119,7 +143,7 @@ export function analyzeHarmony(view: HarmonyView, doc?: MeasurementDocument, set
         const step = 2 / (doc.imageHeight * (axis === "x" ? doc.aspect : 1));
         const moved = { ...p, [axis]: Math.min(1, Math.max(0, p[axis] + step * sign)) };
         try {
-          const sample = calculate(def, { ...doc, points: { ...doc.points, [key]: moved } });
+          const sample = calculate(def, { ...doc, points: { ...doc.points, [key]: moved } }, calibrated);
           lo = Math.min(lo, sample); hi = Math.max(hi, sample);
         } catch { unstable = true; }
       }

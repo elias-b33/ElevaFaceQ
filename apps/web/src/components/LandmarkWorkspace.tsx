@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { measurementOverlay, type LandmarkDefinition, type MeasurementDefinition, type MeasurementDocument, type NamedPoint } from "@freeharmony/engine";
+import { measurementOverlay, requiredMeasurementPoints, type LandmarkDefinition, type MeasurementDefinition, type MeasurementDocument, type NamedPoint } from "@freeharmony/engine";
 
 interface Props {
   photo?: string;
@@ -21,7 +21,8 @@ export function LandmarkWorkspace({ photo, doc, definitions, metric, editing, ac
   const dragging = useRef<string | null>(null);
   const coords = measurementOverlay(metric, doc);
   const activeDef = definitions.find(p => p.key === active);
-  const pointKeys = new Set(editing ? showAll ? definitions.map(p => p.key) : [...metric.required, active] : metric.required);
+  const required = requiredMeasurementPoints(metric, doc);
+  const pointKeys = new Set(editing ? showAll ? definitions.map(p => p.key) : [...required, active] : required);
   const W = 1000 * doc.aspect, H = 1000;
   const moveAt = (event: React.PointerEvent, key: string) => {
     const rect = svg.current!.getBoundingClientRect();
@@ -53,7 +54,7 @@ export function LandmarkWorkspace({ photo, doc, definitions, metric, editing, ac
             const p = doc.points[def.key]; if (!p) return null;
             const isActive = editing && def.key === active, template = p.source === "template";
             const color = isActive ? "#fff" : template ? "#f5aa77" : p.reviewed ? "#c9e8ca" : p.source === "estimated" ? "#f1c176" : "#c4d6e4";
-            return <g key={def.key} data-point={def.key} style={{ cursor: editing ? "crosshair" : "default" }}><title>{def.label} · {template ? "unplaced template" : p.reviewed ? "reviewed" : p.source === "estimated" ? "inferred position" : "image suggestion"}</title><circle cx={p.x * W} cy={p.y * H} r={isActive ? 13 : 7} fill={template ? "#08171566" : "#091b18"} stroke={color} strokeWidth={isActive ? 2.5 : 1.5} vectorEffect="non-scaling-stroke" strokeDasharray={template ? "3 2" : undefined}/><circle cx={p.x * W} cy={p.y * H} r="2" fill={color}/>{(isActive || (!editing && metric.required.length < 7)) && <text x={p.x * W + 14} y={p.y * H - 12} fill={color} fontSize="18" style={{ filter: "url(#point-shadow)", pointerEvents: "none" }}>{isActive ? activeDef?.label : index + 1}</text>}{editing && <circle cx={p.x * W} cy={p.y * H} r="18" fill="transparent"/>}</g>;
+            return <g key={def.key} data-point={def.key} style={{ cursor: editing ? "crosshair" : "default" }}><title>{def.label} · {template ? "unplaced template" : p.reviewed ? "reviewed" : p.source === "estimated" ? "inferred position" : "image suggestion"}</title><circle cx={p.x * W} cy={p.y * H} r={isActive ? 13 : 7} fill={template ? "#08171566" : "#091b18"} stroke={color} strokeWidth={isActive ? 2.5 : 1.5} vectorEffect="non-scaling-stroke" strokeDasharray={template ? "3 2" : undefined}/><circle cx={p.x * W} cy={p.y * H} r="2" fill={color}/>{(isActive || (!editing && required.length < 7)) && <text x={p.x * W + 14} y={p.y * H - 12} fill={color} fontSize="18" style={{ filter: "url(#point-shadow)", pointerEvents: "none" }}>{isActive ? activeDef?.label : index + 1}</text>}{editing && <circle cx={p.x * W} cy={p.y * H} r="18" fill="transparent"/>}</g>;
           })}
         </svg>
       </div>
