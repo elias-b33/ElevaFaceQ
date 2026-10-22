@@ -1,4 +1,4 @@
-/* FaceIQ / Campaign edition. Warm stone, photographic scale, measured movement. */
+/* ElevaFace / Campaign edition. Warm stone, photographic scale, measured movement. */
 html { scroll-behavior: smooth; scroll-padding-top: 110px; }
 .maison-frame { max-width: 2200px; --ease-out: cubic-bezier(.22, 1, .36, 1); }
 .maison-header { position: sticky; top: 0; z-index: 40; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; height: 96px; padding: 0 4.4%; background: #eeeae2f5; backdrop-filter: blur(18px); border-bottom: 1px solid #29271f18; transition: height .5s var(--ease-out), box-shadow .5s; }
@@ -193,7 +193,7 @@ html { scroll-behavior: smooth; scroll-padding-top: 110px; }
 /* A typographic closing signature rather than another row of cards. */
 .maison-footer { padding: 32px 5% 29px; background: #302c25; color: #d8cbbb; overflow: hidden; }
 .footer-topline { display: flex; align-items: center; justify-content: space-between; gap: 20px; font-size: 8px; letter-spacing: 1.6px; color: #a7957e; }
-.footer-wordmark { display: block; text-align: center; font: clamp(150px,24vw,450px)/.9 var(--font-display); letter-spacing: -.055em; padding: 27px 0 49px; color: #e7ddce; }
+.footer-wordmark { display: block; text-align: center; font: clamp(70px,19vw,350px)/.9 var(--font-display); letter-spacing: -.055em; padding: 27px 0 49px; color: #e7ddce; }
 .footer-wordmark>span { color: #a3765a; }
 .footer-bottomline { display: flex; align-items: flex-end; justify-content: space-between; gap: 30px; border-top: 1px solid #d8cbbb2b; padding-top: 24px; }
 .footer-bottomline>p { font-size: 10px; line-height: 1.8; color: #b3a28b; }
@@ -335,9 +335,9 @@ html { scroll-behavior: smooth; scroll-padding-top: 110px; }
 }
 @media(max-width:560px) {
   html { scroll-padding-top: 85px; }
-  .maison-header { height: 75px; padding: 0 5%; }
+  .maison-header { height: 75px; padding: 0 5%; grid-template-columns: auto minmax(0,1fr) auto; column-gap: 12px; }
   .maison-frame[data-scrolled=true] .maison-header { height: 66px; }
-  .maison-wordmark { font-size: 50px; padding-bottom: 6px; letter-spacing: -2px; }
+  .maison-wordmark { font-size: clamp(28px,8vw,43px); justify-self: center; white-space: nowrap; padding-bottom: 6px; letter-spacing: -1.5px; }
   .maison-menu-trigger { gap: 9px; font-size: 8px; }
   .menu-bars { width: 18px; }
   .menu-bars i { width: 18px; }
@@ -427,7 +427,7 @@ html { scroll-behavior: smooth; scroll-padding-top: 110px; }
   .appointment-editorial>p { font-size: 9px; line-height: 1.8; }
   .maison-footer { padding: 26px 7%; }
   .footer-topline { font-size: 5px; letter-spacing: 1.1px; }
-  .footer-wordmark { font-size: 34vw; padding: 35px 0 32px; }
+  .footer-wordmark { font-size: 21vw; padding: 35px 0 32px; }
   .footer-bottomline { gap: 23px; padding-top: 21px; }
   .footer-bottomline>p { font-size: 9px; }
   .footer-bottomline nav { flex-direction: column; align-items: flex-end; gap: 12px; font-size: 8px; margin-left: auto; }

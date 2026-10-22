@@ -20,6 +20,6 @@ export function AnatomyPlate({ view = "front", className = "" }: { view?: "front
       <path d="M123 194l60-13" strokeWidth=".75" strokeDasharray="4 4" opacity=".7"/>
       <g fill="currentColor" stroke="none">{[[202,149],[234,199],[211,211],[210,229],[207,242],[202,274],[168,286],[123,194],[183,181]].map(([x,y],i)=><circle key={i} cx={x} cy={y} r="1.7"/>)}</g>
     </g>}
-    <g fill="currentColor" fontFamily="Arial,sans-serif" fontSize="7.5" letterSpacing="1.2" opacity=".65"><text x="27" y="365">{view === "front" ? "PLATE I — EN FACE" : "PLATE II — PROFIL"}</text><text x="252" y="365">FIQ.</text></g>
+    <g fill="currentColor" fontFamily="Arial,sans-serif" fontSize="7.5" letterSpacing="1.2" opacity=".65"><text x="27" y="365">{view === "front" ? "PLATE I — EN FACE" : "PLATE II — PROFIL"}</text><text x="252" y="365">EF.</text></g>
   </svg>;
 }

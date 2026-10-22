@@ -1,4 +1,4 @@
-# ElevaFaceQ web app
+# ElevaFace web app
 
 See the [project README](../../README.md) for local startup, backups, development
 and the security review. Run development and production commands from the root

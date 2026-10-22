@@ -727,10 +727,10 @@ function ShareButton({ scan }: { scan: StoredScan }) {
     );
     ctx.fillStyle = "#8f8a82";
     ctx.font = "14px system-ui, sans-serif";
-    ctx.fillText("Local FaceIQ — facial geometry measured on your computer", 28, H - 40);
+    ctx.fillText("ElevaFace — facial geometry measured on your computer", 28, H - 40);
     const a = document.createElement("a");
     a.href = c.toDataURL("image/png");
-    a.download = "local-faceiq-report.png";
+    a.download = "elevaface-report.png";
     a.click();
   }, [scan]);
 

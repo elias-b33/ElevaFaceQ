@@ -1,4 +1,4 @@
-name: ElevaFaceQ CI
+name: ElevaFace CI
 
 on:
   push:

@@ -1,4 +1,4 @@
-# Deploy ElevaFaceQ to Vercel
+# Deploy ElevaFace to Vercel
 
 Use [elias-b33/ElevaFaceQ](https://github.com/elias-b33/ElevaFaceQ) as the Git source. The web application lives in `apps/web`; its local workspace dependencies live in `packages/engine` and `packages/advice`. Vercel hosts the interface and static model files. Photo analysis runs in the visitor's browser.
 

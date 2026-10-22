@@ -1,5 +1,5 @@
 {
-  "collection": "FaceIQ — The Portrait Series",
+  "collection": "ElevaFace — The Portrait Series",
   "created": "2026-10-22",
   "method": "Built-in image generation; original fictional adults. Not customer photographs or analysis results.",
   "delivery": "Self-hosted WebP assets, encoded with the existing build image library. No external image service at runtime.",

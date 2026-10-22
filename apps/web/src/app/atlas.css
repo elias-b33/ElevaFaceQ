@@ -1,4 +1,4 @@
-/* FaceIQ / The Private Atlas. Paper, ink, copper and the space between. */
+/* ElevaFace / The Private Atlas. Paper, ink, copper and the space between. */
 .primary-button,.secondary-button{border-radius:0;font-weight:400;letter-spacing:.25px;min-height:47px;padding:13px 21px;font-size:12px;line-height:1.4;display:inline-flex;align-items:center;justify-content:center;gap:24px;border:1px solid #292a25;background:#292a25;color:#fffaf0}
 .primary-button:hover{background:#98533d;border-color:#98533d}.secondary-button{background:transparent;color:#292a25;border-color:#29271f40;gap:12px}.secondary-button:hover{background:#29271f09;border-color:#292a25}
 .atlas-frame{max-width:1800px;min-height:100vh;margin:auto;display:flex;flex-direction:column}

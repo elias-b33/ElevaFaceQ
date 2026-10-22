@@ -1,4 +1,6 @@
-# ElevaFaceQ
+# ElevaFace
+
+**Elevate your face.**
 
 Your browser-based facial measurement workspace, based on [FreeHarmony](https://github.com/Blueturboguy07/freeharmony).
 No account, subscription, paid API, photo upload or hosted deployment is needed.
@@ -16,7 +18,7 @@ are separate for localhost, Vercel previews and your production domain.
 
 ## Open the app
 
-Double-click **Start Local FaceIQ.cmd** in this folder. Keep its console window
+Double-click **Start ElevaFace.cmd** in this folder. Keep its console window
 open, then visit **http://127.0.0.1:3000** in your browser. Press Ctrl+C in the
 console to stop it. The server binds to the loopback address, so it is not
 exposed to other devices on your network. On a fresh clone, complete the

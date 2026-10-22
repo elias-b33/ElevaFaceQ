@@ -1,5 +1,5 @@
 {
-  "name": "elevafaceq",
+  "name": "elevaface",
   "private": true,
   "scripts": {
     "dev": "node scripts/run-local.mjs dev",

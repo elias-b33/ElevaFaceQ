@@ -75,7 +75,7 @@ export function restoreBackup(raw: string): number {
   if (raw.length > 20_000_000) throw new Error("This backup is too large (maximum 20 MB).");
   let checked: z.infer<typeof schema>;
   try { checked = schema.parse(JSON.parse(raw)); }
-  catch { throw new Error("This is not a valid Local FaceIQ backup. No data was changed."); }
+  catch { throw new Error("This is not a valid ElevaFace backup. No data was changed."); }
   const existing = loadScans();
   const known = new Set(existing.map(item => item.id));
   const additions = (checked.scans as StoredScan[]).filter(item => {
@@ -103,7 +103,7 @@ export function downloadBackup(): void {
   const url = URL.createObjectURL(new Blob([createBackup()], { type: "application/json" }));
   const link = document.createElement("a");
   link.href = url;
-  link.download = `local-faceiq-backup-${new Date().toISOString().slice(0, 10)}.json`;
+  link.download = `elevaface-backup-${new Date().toISOString().slice(0, 10)}.json`;
   link.click();
   setTimeout(() => URL.revokeObjectURL(url), 1_000);
 }

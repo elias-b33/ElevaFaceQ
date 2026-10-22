@@ -51,7 +51,7 @@ describe("local scan persistence and backups", () => {
   it("rejects malformed measurement payloads rather than trusting a JSON file", () => {
     saveScan(exampleScan()); const backup = JSON.parse(createBackup());
     backup.scans[0].result.metrics[0].value = "<script>invalid</script>";
-    expect(() => restoreBackup(JSON.stringify(backup))).toThrow("valid Local FaceIQ backup");
+    expect(() => restoreBackup(JSON.stringify(backup))).toThrow("valid ElevaFace backup");
     expect(loadScans()).toHaveLength(1);
   });
   it("leaves the previous history intact if a restore cannot fit", () => {

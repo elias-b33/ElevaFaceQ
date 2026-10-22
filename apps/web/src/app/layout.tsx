@@ -6,8 +6,9 @@ import "./campaign.css";
 import "./interiors.css";
 
 export const metadata: Metadata = {
-  title: { default: "FaceIQ — The Private Atlas", template: "%s | Local FaceIQ" },
-  description: "Facial proportions, editable landmarks and progress tracking. Runs on your computer, with no account, subscription or photo uploads.",
+  title: { default: "ElevaFace — Elevate your face", template: "%s | ElevaFace" },
+  applicationName: "ElevaFace",
+  description: "Elevate your face. Facial proportions, editable landmarks and progress tracking. Runs on your computer, with no account, subscription or photo uploads.",
   referrer: "no-referrer",
 };
 export const viewport: Viewport = { themeColor: "#eeeae2" };
