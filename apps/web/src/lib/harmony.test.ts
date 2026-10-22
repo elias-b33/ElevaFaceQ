@@ -22,13 +22,13 @@ describe("report migration and private export", () => {
   it("replaces unreviewed old front guesses while retaining explicit manual corrections", () => {
     const front = seedDocument("front", .8, canonicalInput().landmarks);
     front.points.hairline = { x: .5, y: .1, source: "estimated", reviewed: false, confidence: .4 };
-    front.points.tragionL = { x: .2, y: .4, source: "manual", reviewed: true };
+    front.points.earL = { x: .2, y: .4, source: "manual", reviewed: true };
     const original: StoredScan = { ...scan, imageAspect: .8, measurements: { version: 1, front },
       input: { ...scan.input!, imageWidth: 800, imageHeight: 1000 } };
     const before = JSON.stringify(original), migrated = scanDocuments(original).front!;
     expect(JSON.stringify(original)).toBe(before);
     expect(migrated.points.hairline.source).toBe("template");
-    expect(migrated.points.tragionL).toEqual(front.points.tragionL);
+    expect(migrated.points.earL).toEqual(front.points.earL);
     expect(migrated.imageHeight).toBe(1000);
     expect(migrated.aspect).toBe(.8);
     expect(migrated.automatic?.engine).toBe("facelab-observed-mesh-1.0");
