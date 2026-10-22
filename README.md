@@ -7,13 +7,13 @@ No account, subscription, paid API, photo upload or hosted deployment is needed.
 
 ## Deploy your hosted version
 
-The source is configured for Vercel. Import **elias-b33/ElevaFaceQ**, choose
-**apps/web** as the Root Directory and use the Next.js preset. Build/install
-commands are in apps/web/vercel.json. Enable outside-root workspace access and
-set the public build flag **ENABLE_EXPERIMENTAL_COREPACK=1** in Vercel.
+The source is configured for Vercel. Import **elias-b33/ElevaFaceQ** and leave
+**Root Directory** at the repository root. The root `vercel.json` selects
+Next.js, builds the hosted edition and uses `apps/web/.next` as its output.
+Projects already rooted at `apps/web` remain supported by that folder's config.
 No application API keys or database are required.
 See [DEPLOYMENT.md](DEPLOYMENT.md) for the exact settings and verification steps.
-Photos and measurement still run in each visitor's browser. Browser histories
+Photos and measurements still run in each visitor's browser. Browser histories
 are separate for localhost, Vercel previews and your production domain.
 
 ## Open the app

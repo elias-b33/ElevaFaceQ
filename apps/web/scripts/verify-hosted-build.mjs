@@ -1,12 +1,29 @@
 // Check the actual build output that CI and the Vercel project will serve.
 import { createHash } from "node:crypto";
 import { existsSync, readFileSync, readdirSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const app = join(dirname(fileURLToPath(import.meta.url)), "..");
 const fail = (message) => { throw new Error(`[hosted verification] ${message}`); };
 const json = (name) => JSON.parse(readFileSync(join(app, ".next", name), "utf8"));
+
+// Vercel reads configuration and resolves Next.js from its selected project root.
+// Verify both supported imports so a successful compile cannot hide a static-site
+// preset looking for "public" at the repository root again.
+const repository = resolve(app, "..", "..");
+const appPackage = JSON.parse(readFileSync(join(app, "package.json"), "utf8"));
+for (const entry of [repository, app]) {
+  const config = JSON.parse(readFileSync(join(entry, "vercel.json"), "utf8"));
+  if (config.framework !== "nextjs" || resolve(entry, config.outputDirectory ?? ".next") !== resolve(app, ".next")) {
+    fail(`Vercel at ${entry} must select Next.js and the web app's .next output.`);
+  }
+  const pkg = JSON.parse(readFileSync(join(entry, "package.json"), "utf8"));
+  const installed = JSON.parse(readFileSync(join(entry, "node_modules", "next", "package.json"), "utf8"));
+  if (pkg.dependencies?.next !== appPackage.dependencies.next || installed.version !== appPackage.dependencies.next) {
+    fail(`Vercel at ${entry} must resolve the same pinned Next.js version as apps/web.`);
+  }
+}
 
 if (!existsSync(join(app, ".next", "BUILD_ID"))) fail("No successful Next.js production build exists.");
 const required = json("required-server-files.json");
@@ -30,4 +47,4 @@ const wasm = readdirSync(join(app, "public", "mediapipe", "wasm"));
 if (!wasm.some(name => name.endsWith(".wasm")) || !wasm.some(name => name.endsWith(".js"))) {
   fail("The same-origin MediaPipe WASM loader or binary is missing.");
 }
-console.log("[hosted verification] Production output, hosted mode, CSP, model hashes and WASM assets passed.");
+console.log("[hosted verification] Vercel entrypoints, Next.js resolution, production output, hosted mode, CSP, model hashes and WASM assets passed.");
