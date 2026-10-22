@@ -1,9 +1,14 @@
-name: CI
+name: ElevaFaceQ CI
 
 on:
   push:
     branches: [main]
   pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
@@ -20,10 +25,15 @@ jobs:
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 24.x
-      - run: corepack enable
-      - run: corepack pnpm install --frozen-lockfile --ignore-scripts
-      - run: corepack pnpm typecheck
-      - run: corepack pnpm test
-      - run: corepack pnpm build:vercel
-        env:
-          VERCEL: "1"
+      - name: Enable the repository's pinned package manager
+        run: corepack enable
+      - name: Install the frozen workspace without dependency lifecycle scripts
+        run: corepack pnpm install --frozen-lockfile --ignore-scripts
+      - name: Type-check all workspace packages
+        run: corepack pnpm typecheck
+      - name: Run engine, advice and application tests
+        run: corepack pnpm test
+      - name: Build the hosted edition with same-origin model assets
+        run: corepack pnpm build:vercel
+      - name: Verify the produced hosted build
+        run: corepack pnpm verify:hosted

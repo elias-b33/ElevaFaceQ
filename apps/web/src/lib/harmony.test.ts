@@ -19,6 +19,20 @@ describe("report migration and private export", () => {
     const original = { ...scan, imageAspect: .6, result: { ...scan.result, frame: null } };
     expect(scanDocuments(original).front!.aspect).toBe(.6);
   });
+  it("replaces unreviewed old front guesses while retaining explicit manual corrections", () => {
+    const front = seedDocument("front", .8, canonicalInput().landmarks);
+    front.points.hairline = { x: .5, y: .1, source: "estimated", reviewed: false, confidence: .4 };
+    front.points.tragionL = { x: .2, y: .4, source: "manual", reviewed: true };
+    const original: StoredScan = { ...scan, imageAspect: .8, measurements: { version: 1, front },
+      input: { ...scan.input!, imageWidth: 800, imageHeight: 1000 } };
+    const before = JSON.stringify(original), migrated = scanDocuments(original).front!;
+    expect(JSON.stringify(original)).toBe(before);
+    expect(migrated.points.hairline.source).toBe("template");
+    expect(migrated.points.tragionL).toEqual(front.points.tragionL);
+    expect(migrated.imageHeight).toBe(1000);
+    expect(migrated.aspect).toBe(.8);
+    expect(migrated.automatic?.engine).toBe("facelab-observed-mesh-1.0");
+  });
   it("never turns the legacy eight profile anchors into a complete 35-metric report", () => {
     const doc = seedDocument("side", .8);
     const keys = ["glabella", "nasion", "pronasale", "subnasale", "labialeSup", "labialeInf", "pogonion", "menton"];

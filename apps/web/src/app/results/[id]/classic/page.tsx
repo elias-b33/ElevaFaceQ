@@ -74,7 +74,7 @@ export default function ResultsPage({ params }: { params: Promise<{ id: string }
       const merged = { ...scan.overrides, ...draftOverrides };
       const profile = loadProfile();
       const next: ScanResult = await reanalyze(scan.input, scan.photo, profile.sex, merged);
-      const updated: StoredScan = { ...scan, result: next, overrides: merged };
+      const updated: StoredScan = { ...scan, result: next, overrides: merged, diagnostic:undefined };
       saveScan(updated);
       // saveScan prepends; re-read the canonical copy to avoid duplicates
       const fresh = loadScans().find((s) => s.id === scan.id) ?? updated;

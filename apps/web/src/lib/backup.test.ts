@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { analyze, seedDocument } from "@freeharmony/engine";
-import { canonicalInput } from "../../../../packages/engine/test/helpers";
+import { analyze, analyzeDiagnostic, seedDocument } from "@freeharmony/engine";
+import { canonicalInput, projectCanonical, rotXYZ, toColMajor16 } from "../../../../packages/engine/test/helpers";
 import { createBackup, restoreBackup } from "./backup";
 import { loadScans, saveProfile, saveScan, SCANS_KEY, type StoredScan } from "./store";
 
@@ -75,6 +75,22 @@ describe("local scan persistence and backups", () => {
     saveScan(exampleScan()); const backup = JSON.parse(createBackup()); backup.version = 1;
     entries.delete(SCANS_KEY); expect(restoreBackup(JSON.stringify(backup))).toBe(1);
     expect(loadScans()[0].result.engineVersion).toBe(exampleScan().result.engineVersion);
+  });
+  it("round-trips a provisional diagnostic without converting the refused result into an accepted score", () => {
+    const rotation = rotXYZ(0, 11, 0);
+    const input = canonicalInput({ landmarks: projectCanonical(rotation), transformationMatrix: toColMajor16(rotation), bandProfile: "calibrated" });
+    const diagnostic = analyzeDiagnostic(input)!;
+    expect(diagnostic).not.toBeNull();
+    const original: StoredScan = { ...exampleScan(), result: analyze(input), diagnostic,
+      input: { landmarks: input.landmarks, mirrored: false, imageWidth: input.imageWidth, imageHeight: input.imageHeight, transformationMatrix: input.transformationMatrix } };
+    saveScan(original); const backup = createBackup();
+    entries.delete(SCANS_KEY); restoreBackup(backup);
+    expect(loadScans()[0]).toEqual(JSON.parse(JSON.stringify(original)));
+    expect(loadScans()[0].result).toMatchObject({ ok: false, overall: null });
+    expect(loadScans()[0].diagnostic?.gates.pass).toBe(false);
+    const malformed = JSON.parse(backup);
+    malformed.scans[0].diagnostic.gates.pass = true;
+    expect(() => restoreBackup(JSON.stringify(malformed))).toThrow("No data was changed");
   });
   it("preserves automatic evidence and quality labels in a v3 backup", () => {
     const side=seedDocument("side",1);

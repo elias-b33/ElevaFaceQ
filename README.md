@@ -1,13 +1,15 @@
-# Local FaceIQ
+# ElevaFaceQ
 
-Your personal, local fork of [FreeHarmony](https://github.com/Blueturboguy07/freeharmony).
+Your browser-based facial measurement workspace, based on [FreeHarmony](https://github.com/Blueturboguy07/freeharmony).
 No account, subscription, paid API, photo upload or hosted deployment is needed.
 
 ## Deploy your hosted version
 
-The source is configured for Vercel. Import **elias-b33/facelab**, choose
+The source is configured for Vercel. Import **elias-b33/ElevaFaceQ**, choose
 **apps/web** as the Root Directory and use the Next.js preset. Build/install
-commands are in apps/web/vercel.json; no API keys or database are required.
+commands are in apps/web/vercel.json. Enable outside-root workspace access and
+set the public build flag **ENABLE_EXPERIMENTAL_COREPACK=1** in Vercel.
+No application API keys or database are required.
 See [DEPLOYMENT.md](DEPLOYMENT.md) for the exact settings and verification steps.
 Photos and measurement still run in each visitor's browser. Browser histories
 are separate for localhost, Vercel previews and your production domain.
@@ -17,8 +19,8 @@ are separate for localhost, Vercel previews and your production domain.
 Double-click **Start Local FaceIQ.cmd** in this folder. Keep its console window
 open, then visit **http://127.0.0.1:3000** in your browser. Press Ctrl+C in the
 console to stop it. The server binds to the loopback address, so it is not
-exposed to other devices on your network. Dependencies, the face model and the
-production build have been prepared in this installation.
+exposed to other devices on your network. On a fresh clone, complete the
+installation and build steps below first.
 
 Use the same browser and the exact same address to keep your history together.
 `localhost:3000`, `127.0.0.1:3000` and another browser have separate browser storage.
@@ -39,11 +41,17 @@ Use the same browser and the exact same address to keep your history together.
   landmark and report controls. The campaign landing page keeps its own layout.
 - **71 named measurements: 36 front + 35 side**, covering all current public
   FaceIQ measurement guides, including five supporting definitions.
-- Automatic landmark drafts for both front and profile photos. The existing
-  478-point MediaPipe mesh works alongside a local hair/skin segmenter and
-  image-edge refinement. No new package, paid API or Python service is needed.
-  Failed photo quality checks remain visible, and only suitable front photos
-  receive the original FreeHarmony harmony index.
+- Front photos use the pinned 478-point MediaPipe model with CPU inference,
+  matching the saved mapping study's inference path. The animated map preserves
+  the original image coordinates and provides pause, replay, timeline and layer
+  controls. It seeds 42 mesh anchors; hairline, ears, neck, eyelid hoods/creases
+  and nasal bridge edges remain unplaced until reviewed. Available measurements
+  depend on those observed points, rather than inferred anatomical guesses.
+- The calibrated harmony index uses the same metric weights and confidence
+  rules as the saved study. Failed photo checks remain failed. A pose-only
+  refusal can expose a separate provisional diagnostic, with unsupported areas
+  excluded and the accepted score withheld. It is not a population percentile.
+  The existing side-photo drafting and manual review tools remain available.
 - Detailed front and profile reports with formulas, anatomical point lists,
   construction overlays, placement guidance and explicit missing-data states.
 - A guided editor for 53 front and 27 side landmarks, zoom, keyboard movement,
@@ -59,7 +67,8 @@ Use the same browser and the exact same address to keep your history together.
   all-measurement comparisons, CSV and JSON exports, and a self-contained offline
   HTML report. Print / PDF uses the browser's local print dialog.
 - Validated version-3 JSON backups include automatic provenance, quality labels,
-  named points, review state, scale, notes and custom ranges. Version-1 and
+  source dimensions, provisional diagnostics, named points, review state, scale,
+  notes and custom ranges. Version-1 and
   version-2 backups and existing scans still open.
 - Original 18 frontal metrics and five legacy profile measures remain in the
   classic results view, without rewriting the original saved measurements.
@@ -139,7 +148,10 @@ Node.js 24 and pnpm 11 were used for this setup. From this folder:
 pnpm dev            # http://127.0.0.1:3000, with live code changes
 pnpm test           # engine, advice and application regression tests
 pnpm typecheck
-pnpm build          # produce the local production build
+pnpm build          # prepare pinned assets, then build the local edition
+pnpm build:offline  # build using already prepared assets, without downloads
+pnpm build:vercel   # reproduce the hosted edition on any supported OS
+pnpm verify:hosted  # check the hosted build and packaged model assets
 pnpm start          # serve the production build on loopback
 pnpm security:audit
 ```

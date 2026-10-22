@@ -1,19 +1,15 @@
 import type {
   AreaKey,
   GateReport,
-  MetricResult,
   ScanInput,
   ScanResult,
 } from "./types";
 import { buildFrame } from "./normalize";
 import { runGates } from "./gates/index";
-import { METRICS } from "./metrics/registry";
-import { resolveBand } from "./scoring/bands";
-import { round1, subScore, verdictOf } from "./scoring/curve";
-import { aggregate } from "./scoring/aggregate";
+import { evaluateFrame } from "./scoring/evaluate";
+import { diagnosticFromRefusal, validDiagnosticInput, type ScanDiagnostic } from "./scoring/diagnostic";
 import {
   overallPercentileOf,
-  percentileOf,
   standardizedOverall,
 } from "./scoring/norms";
 
@@ -90,57 +86,7 @@ export function analyze(input: ScanInput): ScanResult {
     };
   }
 
-  const ctx = {
-    image: input.image ?? null,
-    gates,
-    sex,
-    hasIris: frame.hasIris,
-  };
-
-  const pitchUnknown = frame.pitchDeg === null;
-  const metrics: MetricResult[] = [];
-  const invalidMetrics: string[] = [];
-  const weights: Record<string, { area: AreaKey; weight: number }> = {};
-
-  for (const def of METRICS) {
-    weights[def.key] = { area: def.area, weight: def.weight };
-    const computed = def.compute(frame, ctx);
-    if (computed === null) continue;
-    if (!Number.isFinite(computed.value) || !Number.isFinite(computed.confidence)) {
-      invalidMetrics.push(def.label);
-      continue;
-    }
-    let confidence = computed.confidence * gates.confidenceMultiplier;
-    const regionCap = gates.regionConfidence[def.region];
-    if (regionCap !== undefined) confidence = Math.min(confidence, regionCap);
-    if (def.vertical && pitchUnknown) confidence = Math.min(confidence, 0.55);
-    confidence = Math.max(0, Math.min(1, confidence));
-
-    const band = resolveBand(def.bands[bandProfile], sex);
-    const score = round1(subScore(computed.value, band));
-    if (!Number.isFinite(score)) { invalidMetrics.push(def.label); continue; }
-    metrics.push({
-      key: def.key,
-      label: def.label,
-      value: computed.value,
-      unit: def.unit,
-      band,
-      score,
-      verdict: verdictOf(score),
-      confidence,
-      flags: computed.flags ?? [],
-      percentile: percentileOf(def.key, computed.value),
-      detail: computed.detail,
-    });
-  }
-
-  if (invalidMetrics.length) gates.warnings.push({
-    code: "invalid-geometry", severity: "warn",
-    message: `Undefined geometry was excluded: ${invalidMetrics.join(", ")}.`,
-    retake: "Check coincident landmarks and use a level, relaxed front photograph.",
-  });
-
-  const agg = aggregate(metrics, weights);
+  const { metrics, aggregate: agg } = evaluateFrame(input, frame, gates, sex, bandProfile, true);
   const refused = agg.overall === null;
 
   return {
@@ -179,8 +125,17 @@ export function analyze(input: ScanInput): ScanResult {
   };
 }
 
+/** Optional inspection of a pose-refused photograph. The original analyze()
+ * result stays refused. No blur, exposure, occlusion or topology gate is bypassed.
+ */
+export function analyzeDiagnostic(input: ScanInput): ScanDiagnostic | null {
+  if (!validDiagnosticInput(input)) return null;
+  return diagnosticFromRefusal(input, analyze(input));
+}
+
 // Public surface
 export * from "./types";
+export type { ScanDiagnostic } from "./scoring/diagnostic";
 export { buildFrame } from "./normalize";
 export { runGates, eyeAspectRatio } from "./gates/index";
 export { METRICS, TRICHION_K, computeJawEdgeSupport } from "./metrics/registry";

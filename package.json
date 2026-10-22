@@ -1,11 +1,13 @@
 {
-  "name": "local-faceiq",
+  "name": "elevafaceq",
   "private": true,
   "scripts": {
     "dev": "node scripts/run-local.mjs dev",
     "start": "node scripts/run-local.mjs start",
-    "build": "node scripts/run-local.mjs build",
-    "build:vercel": "pnpm --filter web build",
+    "build": "node apps/web/scripts/build.mjs",
+    "build:offline": "node scripts/run-local.mjs build",
+    "build:vercel": "node apps/web/scripts/build.mjs --hosted",
+    "verify:hosted": "node apps/web/scripts/verify-hosted-build.mjs",
     "setup:assets": "node apps/web/scripts/prepare-assets.mjs",
     "security:audit": "pnpm audit",
     "test": "pnpm -r test",

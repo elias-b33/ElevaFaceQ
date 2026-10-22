@@ -1,91 +1,68 @@
-# Deploy FaceIQ to Vercel
+# Deploy ElevaFaceQ to Vercel
 
-The app is ready to import from [elias-b33/facelab](https://github.com/elias-b33/facelab).
-Vercel serves the application and its model files. Face landmark inference,
-measurement, photos, history and reports stay in each visitor's browser.
-No API key, database, account system or paid inference provider is required.
+Use [elias-b33/ElevaFaceQ](https://github.com/elias-b33/ElevaFaceQ) as the Git source. The web application lives in `apps/web`; its local workspace dependencies live in `packages/engine` and `packages/advice`. Vercel hosts the interface and static model files. Photo analysis runs in the visitor's browser.
 
-## Import settings
+## Import the repository
 
-1. In Vercel, choose **Add New → Project** and import **elias-b33/facelab**.
-2. Set **Root Directory** to **apps/web**. Keep **Include source files outside of
-   the Root Directory** enabled so the engine/advice workspace packages are available.
-3. Keep the **Next.js** preset and deploy the **main** branch. No application secrets
-   or environment variables need to be supplied.
-
-The tracked `apps/web/vercel.json` provides these commands automatically:
+1. In Vercel, choose **Add New → Project** and import **elias-b33/ElevaFaceQ**. If the repository is absent, grant the Vercel GitHub integration access to this repository.
+2. Set **Root Directory** to **apps/web** and enable **Include source files outside of the Root Directory in the Build Step**. This makes the workspace packages and root lockfile available.
+3. Choose the **Next.js** preset, **main** as the production branch, and **Node.js 24.x**.
+4. Add the build setting **ENABLE_EXPERIMENTAL_COREPACK=1** for Production and Preview. It is a public build flag, not a secret. Both package manifests pin **pnpm 11.25.0**.
+5. Keep the commands from the tracked `apps/web/vercel.json` and deploy.
 
 | Setting | Value |
 | --- | --- |
-| Node.js | 24.x (declared in package.json) |
-| Package manager | pnpm 11.25.0, selected through Corepack |
-| Install command | corepack pnpm install --frozen-lockfile --ignore-scripts |
-| Build command | corepack pnpm run build |
-| Output directory | .next |
+| Git repository | `elias-b33/ElevaFaceQ` |
+| Production branch | `main` |
+| Root Directory | `apps/web` |
+| Framework | Next.js |
+| Node.js | `24.x` |
+| Build environment | `ENABLE_EXPERIMENTAL_COREPACK=1` |
+| Install command | `corepack pnpm install --frozen-lockfile --ignore-scripts` |
+| Build command | `corepack pnpm run build && node scripts/verify-hosted-build.mjs` |
+| Output directory | `.next` |
 
-Corepack uses the exact pnpm version declared in package.json. Install lifecycle
-scripts stay disabled; the build explicitly prepares the reviewed vision assets.
-Do not choose the repository root as the Next.js project root. The root-level
-`pnpm build` is the offline local-installation build; Vercel uses the app's own build.
+No application API keys, database or inference-provider account are required. The Git connection, root directory, outside-root access, production branch and Corepack environment flag are Vercel project settings; source files cannot update an existing project's settings by themselves. Redeploy after changing them. Vercel documents [Corepack activation](https://vercel.com/docs/builds/configure-a-build#corepack), [supported package managers](https://vercel.com/docs/package-managers), [shared monorepo source](https://vercel.com/docs/monorepos/monorepo-faq#can-i-share-source-files-between-projects-are-shared-packages-supported) and [Node.js selection](https://vercel.com/docs/functions/runtimes/node-js/node-js-versions).
 
-## What the build does
+## What the build verifies
 
-- Copies MediaPipe WASM from the locked installed dependency.
-- Fetches missing Face Landmarker and SelfieMulticlass model files from Google's
-  official storage, checking their pinned SHA-256 values before saving them.
-- Compiles Next.js with the workspace engine/advice source included in file tracing.
-- Includes self-hosted Instrument Serif fonts and original SVG artwork.
-- Disables application build telemetry and selects the hosted edition automatically
-  when Vercel sets VERCEL=1.
+The application build copies MediaPipe's WASM runtime from the frozen dependency installation, fetches missing Face Landmarker and SelfieMulticlass model files from Google's official storage, checks their pinned SHA-256 hashes and compiles Next.js. Generated model files stay out of Git and are reconstructed during a clean build. Fonts and campaign images are self-hosted application assets. Research photographs, local captures, backups and training data are excluded from the source deployment.
 
-The generated `public/mediapipe/` folder is intentionally ignored by Git. It is
-reconstructed on a fresh Vercel build, so a clean checkout contains everything
-needed to build without committing duplicate binaries. No models are fetched from
-a third-party CDN during a visitor's analysis; the deployed assets use the same origin.
+The final verification checks that Next.js produced a production build, the compiled hosted-edition flag is enabled, the hosted Content Security Policy excludes localhost services and development `unsafe-eval`, the model hashes match and WASM files are present. A failure stops CI or the Vercel deployment. `wasm-unsafe-eval` remains enabled because the in-browser vision runtime needs WebAssembly.
 
-## Hosted privacy and storage
+Dependency lifecycle scripts stay disabled during installation. Asset preparation is an explicit build step; starting an already prepared local installation performs no downloads. Both root `pnpm build` and the app's `pnpm build` use this portable build path. The explicit `pnpm build:offline` command retains the local build that requires models to have been prepared already.
 
-The hosted edition disables the optional localhost Ollama feature and omits local
-service addresses from its Content Security Policy. Automatic face detection and
-all geometry remain available in the browser. The local installation retains its
-optional local Ollama controls.
+## Reproduce the hosted build
 
-History belongs to a specific browser and origin. The localhost installation,
-Vercel preview URLs and the production domain each have separate browser storage.
-Use **Settings → Export backup / Restore backup** to move your own analyses.
-Neither GitHub nor Vercel receives those backups as part of this source deployment.
-
-The repository excludes local research face downloads, generated galleries, QA
-photos, backups, machine-specific security logs, dependency folders and build output.
-The source keeps the original FreeHarmony history and AGPL-3.0 license.
-
-Vercel hosts the page and serves static assets; its normal hosting/traffic limits
-apply. The application does not charge for inference or require a paid service.
-
-## Reproduce the deployment build locally
-
-From the repository root, with Node 24 and pnpm 11.25.0 installed:
+From the repository root, with Node.js 24 and Corepack available:
 
 ```powershell
-pnpm install --frozen-lockfile --ignore-scripts
-pnpm test
-pnpm typecheck
-$env:VERCEL = '1'
-pnpm build:vercel
-Remove-Item Env:VERCEL
+corepack pnpm install --frozen-lockfile --ignore-scripts
+corepack pnpm typecheck
+corepack pnpm test
+corepack pnpm build:vercel
+corepack pnpm verify:hosted
 ```
 
-This build may download the two pinned model assets if absent. Use a disposable
-checkout if you want to keep the normal localhost production build untouched.
+`build:vercel` selects the hosted edition within its child process on Windows, macOS and Linux. It does not require changing the terminal's environment. The same checks run in `.github/workflows/ci.yml` for pushes to `main`, pull requests and manual workflow runs.
 
-## Verify after deployment
+A successful local/CI build confirms source compatibility and packaged assets; the actual Vercel deployment must also succeed under the connected account. Do not infer that a public URL exists from a local build.
 
-Open the generated Vercel URL, choose a photo, and check the front report. Add a
-side photo to test the profile draft. Models should load from `/mediapipe/` on your
-own deployment, fonts from `/fonts/`, and no photo-upload request should occur.
-Saved reports should survive a page reload in the same browser.
+## If an import fails
 
-Reference: [Vercel monorepos](https://vercel.com/docs/monorepos),
-[Node.js versions](https://vercel.com/docs/functions/runtimes/node-js/node-js-versions),
-[package managers](https://vercel.com/docs/package-managers), and
-[project configuration](https://vercel.com/docs/project-configuration/vercel-json).
+| Build symptom | Check |
+| --- | --- |
+| Next.js cannot be detected, or the expected `.next` is missing | Root Directory must be `apps/web`, with the Next.js preset. Remove stale root-level build/output overrides. |
+| Workspace package or `pnpm-lock.yaml` cannot be found | Enable outside-root source access; import the whole repository. |
+| Wrong pnpm version or incompatible lockfile | Set `ENABLE_EXPERIMENTAL_COREPACK=1`; retain the tracked install command and exact `packageManager` fields. Do not substitute plain `pnpm install` as a custom command. |
+| Frozen-lockfile failure | Commit matching manifest and lockfile changes; do not disable frozen installation to hide drift. |
+| Model download or model integrity failure | Check the build's network access to the official Google Storage URLs. Retry a failed transfer; never bypass the hash check. |
+| Hosted verification reports local mode | Build on Vercel or run `pnpm build:vercel` locally. A local `pnpm build` deliberately retains local-only controls. |
+
+## Verify the deployed page
+
+Open the deployment URL, begin a study and check a frontal report. Add a side photo to inspect the profile draft. Models must load from `/mediapipe/` on the deployment origin and fonts from `/fonts/`. No photo-upload request should occur. The hosted edition disables optional localhost Ollama controls and removes local service addresses from its Content Security Policy.
+
+Save and reload an analysis in the same browser. Browser history belongs to an origin, so localhost, each Vercel preview hostname and the production domain have separate storage. Use **Settings → Export backup / Restore backup** to move your own saved work; those files are not part of deployment.
+
+The application keeps the upstream FreeHarmony attribution and AGPL-3.0 license. Vercel's normal hosting and traffic limits apply. The hosted interface does not turn the local research rating pilot into a validated production attractiveness score.

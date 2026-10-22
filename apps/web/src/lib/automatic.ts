@@ -3,6 +3,7 @@
 import { FaceLandmarker, FilesetResolver, ImageSegmenter, type FaceLandmarkerResult } from "@mediapipe/tasks-vision";
 import { automaticLandmarks, eulerFromMatrix, type HarmonyView, type MeasurementDocument, type SegmentationPlane, type XY } from "@freeharmony/engine";
 import { getLandmarker } from "./landmarker";
+import { observedFrontDocument } from './observed-mapping';
 
 let segmenter: Promise<ImageSegmenter> | undefined;
 let profileModel: Promise<FaceLandmarker> | undefined;
@@ -54,6 +55,16 @@ export function detectAutomatic(options: DetectionOptions): Promise<MeasurementD
 }
 async function detect({ view, canvas: original, mesh: suppliedMesh, onProgress }: DetectionOptions) {
   const step = async (message: string) => { onProgress?.(message); await paint(); };
+  if (view==='front') {
+    await step('Mapping observed facial landmarks');
+    let mesh=suppliedMesh;
+    if (!mesh?.length) {
+      const detection=(await getLandmarker()).detect(original);
+      if (detection.faceLandmarks.length!==1) throw new Error(detection.faceLandmarks.length>1 ? 'More than one face was found. Choose a photo containing one person.' : 'No face was found. Choose a clearer photograph.');
+      mesh=detection.faceLandmarks[0];
+    }
+    return observedFrontDocument({mesh,width:original.width,height:original.height,at:Date.now()});
+  }
   await step("Opening local vision models");
   const canvas = document.createElement("canvas"), scale = Math.min(1, 1024 / Math.max(original.width, original.height));
   canvas.width = Math.max(1, Math.round(original.width * scale)); canvas.height = Math.max(1, Math.round(original.height * scale));

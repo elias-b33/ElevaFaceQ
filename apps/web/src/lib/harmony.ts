@@ -1,10 +1,19 @@
-import { analyzeHarmony, describeMeasurement, formatMeasurement, FRONT_LANDMARKS, HARMONY_CATALOG, HARMONY_VERSION, REFERENCE_NOTE, seedDocument, SIDE_LANDMARKS, type HarmonyReport, type HarmonySettings, type MeasurementDocument } from "@freeharmony/engine";
+import { analyzeHarmony, describeMeasurement, formatMeasurement, FRONT_LANDMARKS, HARMONY_CATALOG, HARMONY_VERSION, REFERENCE_NOTE, seedDocument, mergeAutomaticDocument, SIDE_LANDMARKS, type HarmonyReport, type HarmonySettings, type MeasurementDocument } from "@freeharmony/engine";
 import type { StoredScan } from "./store";
+import { MAPPING_ENGINE, observedFrontDocument } from './observed-mapping';
 
 /** Derive an editor document without silently rewriting or deleting old scans. */
 export function scanDocuments(scan: StoredScan): HarmonySettings {
   const frontAspect = scan.imageAspect ?? (scan.result.frame ? scan.result.frame.imageWidth / scan.result.frame.imageHeight : 1);
-  const front = scan.measurements?.front ?? seedDocument("front", frontAspect, scan.input?.landmarks, scan.overrides);
+  let front=scan.measurements?.front;
+  if (!front || scan.input?.landmarks && front.automatic?.engine!==MAPPING_ENGINE) {
+    const height=scan.input?.imageHeight ?? scan.result.frame?.imageHeight ?? front?.imageHeight ?? 768/Math.max(1,frontAspect);
+    const observed=observedFrontDocument({mesh:scan.input?.landmarks,width:height*frontAspect,height});
+    // Existing explicit corrections survive; unreviewed anatomical guesses do not.
+    const overrides=scan.overrides ? seedDocument('front',frontAspect,scan.input?.landmarks,scan.overrides) : undefined;
+    front=mergeAutomaticDocument(front,observed);
+    if(overrides) for(const [key,p] of Object.entries(overrides.points)) if(p.source==='manual') front.points[key]=p;
+  }
   let side: MeasurementDocument | undefined = scan.measurements?.side;
   if (!side && scan.side) {
     side = seedDocument("side", scan.side.imageAspect ?? 1);

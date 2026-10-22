@@ -3,6 +3,8 @@
 import type { FaceLandmarkerResult } from "@mediapipe/tasks-vision";
 import {
   analyze,
+  analyzeDiagnostic,
+  type ScanDiagnostic,
   type Gate,
   type ScanInput,
   type ScanResult,
@@ -45,15 +47,18 @@ function faceCountGate(count: number): Gate {
 
 export interface ScanOutcome {
   result: ScanResult;
+  /** Explicit post-refusal estimate; never substitutes for result.ok. */
+  diagnostic: ScanDiagnostic | null;
   /** JPEG data URL, long edge ≤ 768px — for display, history, and AI calls. */
   photo: string;
-  /** Everything needed to re-run analyze() later (Adjust Points, sex change) —
-   *  minus the pixel buffer, which is rebuilt from `photo` on demand. */
+  /** Original capture geometry; a stored-photo rerun uses its actual pixels. */
   input: StoredInput | null;
 }
 
 export interface StoredInput {
   landmarks: ScanInput["landmarks"];
+  imageWidth?: number;
+  imageHeight?: number;
   mirrored: boolean;
   blendshapes?: Record<string, number>;
   transformationMatrix?: number[];
@@ -101,7 +106,7 @@ export async function runScan(
       bandProfile: "faceharmony-parity",
       sex,
     };
-    return { result: gateFail, photo, input: null };
+    return { result: gateFail, diagnostic:null, photo, input: null };
   }
 
   const ctx = frame.canvas.getContext("2d", { willReadFrequently: true })!;
@@ -124,6 +129,7 @@ export async function runScan(
   };
 
   const result = analyze(input);
+  const diagnostic = result.ok ? null : analyzeDiagnostic(input);
   // Field-calibration breadcrumbs (harmless in prod, invaluable in bug reports).
   if (result.frame) {
     console.info(
@@ -143,9 +149,12 @@ export async function runScan(
 
   return {
     result,
+    diagnostic,
     photo,
     input: {
       landmarks: input.landmarks,
+      imageWidth: input.imageWidth,
+      imageHeight: input.imageHeight,
       mirrored: frame.mirrored,
       blendshapes: input.blendshapes,
       transformationMatrix: input.transformationMatrix,
@@ -155,8 +164,8 @@ export async function runScan(
 
 /**
  * Re-run the engine against the stored (downscaled) photo — used by Adjust
- * Points and profile changes. Metrics are scale-invariant, so analyzing at
- * 768px reproduces the original values.
+ * Points and profile changes. Pixel-dependent quality checks can differ from
+ * the original capture; never upscale a saved image to make those checks pass.
  */
 export async function reanalyze(
   stored: StoredInput,

@@ -6,6 +6,7 @@ import type {
   ScanResult,
   Sex,
   HarmonySettings,
+  ScanDiagnostic,
 } from "@freeharmony/engine";
 import type { StoredInput } from "./scan";
 
@@ -48,6 +49,8 @@ export interface StoredScan {
   id: string;
   createdAt: number;
   result: ScanResult;
+  /** Separate, explicitly provisional estimate for a pose-refused capture. */
+  diagnostic?: ScanDiagnostic;
   /** JPEG data URL, long edge ≤ 768. */
   photo: string;
   /** Original photo aspect, including manual scans without a detected face. */

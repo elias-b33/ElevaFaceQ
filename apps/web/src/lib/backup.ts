@@ -27,6 +27,17 @@ const measurementDocument = z.object({
 });
 const range = z.object({ lo: finite.min(-100000).max(100000), hi: finite.min(-100000).max(100000) }).refine(r => r.lo < r.hi);
 const measurements = z.object({ version: z.literal(1), front: measurementDocument.optional(), side: measurementDocument.optional(), ranges: z.record(z.string().refine(k => harmonyKeys.has(k)), range.nullable()).optional(), descriptiveOnly: z.boolean().optional(), notes: z.string().max(5000).optional() });
+const gateReport = z.object({ pass:z.boolean(), blocking:z.array(gate).max(100), warnings:z.array(gate).max(100), confidenceMultiplier:finite, regionConfidence:z.record(finite), jawEdgeSupport:finite.nullable() });
+const frame = z.object({ pts:z.array(point3).min(468).max(478), scale:finite.positive(), rollDeg:finite, yawDeg:finite.nullable(), pitchDeg:finite.nullable(), poseSource:z.enum(['matrix','landmark-proxy']), yawAsym:finite, imageWidth:finite.positive(), imageHeight:finite.positive(), hasIris:z.boolean() });
+const areas = z.object({symmetry:area,eyeArea:area,midface:area,jawline:area});
+const metric = z.object({key:z.string().refine(key=>metricKeys.has(key)),label:text,value:finite,unit:text,band,score:finite.min(0).max(100),verdict,confidence:normalized,flags:z.array(text).max(100),percentile:finite.nullable(),detail:z.record(z.union([finite,z.array(finite)])).optional()});
+const diagnostic = z.object({
+  kind:z.literal('post-refusal-diagnostic'),provisional:z.literal(true),accepted:z.literal(false),
+  provisionalOverall:finite.min(0).max(100).nullable(),areas,
+  omittedAreas:z.array(z.enum(['symmetry','eyeArea','midface','jawline'])).max(4),
+  gates:gateReport,metrics:z.array(metric.extend({percentile:z.null()})).max(30),frame,
+  bandProfile:z.enum(['faceharmony-parity','literature','calibrated']),sex,engineVersion:text,
+}).refine(d=>!d.gates.pass && d.gates.blocking.length>0,'A provisional diagnostic must retain its failed photo checks.');
 const scan = z.object({
   id: z.string().regex(/^scan_[A-Za-z0-9_-]+$/).max(100), createdAt: finite.min(0), photo, imageAspect: finite.positive().max(100).optional(),
   result: z.object({
@@ -39,7 +50,8 @@ const scan = z.object({
     areas: z.object({ symmetry: area, eyeArea: area, midface: area, jawline: area }),
     metrics: z.array(z.object({ key: z.string().refine(key => metricKeys.has(key)), label: text, value: finite, unit: text, band, score: finite.min(0).max(100), verdict, confidence: finite.min(0).max(1), flags: z.array(text).max(100), percentile: finite.nullable(), detail: z.record(z.union([finite, z.array(finite)])).optional() })).max(30),
   }),
-  input: z.object({ landmarks: z.array(point3).min(468).max(478), mirrored: z.boolean(), blendshapes: z.record(finite).optional(), transformationMatrix: z.array(finite).length(16).optional() }).optional(),
+  diagnostic:diagnostic.optional(),
+  input: z.object({ landmarks: z.array(point3).min(468).max(478), imageWidth:finite.positive().optional(),imageHeight:finite.positive().optional(),mirrored: z.boolean(), blendshapes: z.record(finite).optional(), transformationMatrix: z.array(finite).length(16).optional() }).optional(),
   overrides: z.record(z.string().regex(/^\d{1,3}$/).refine(value => Number(value) < 478), point).optional(),
   measurements: measurements.optional(),
   side: z.object({ photo, anchors, at: finite, imageAspect: finite.positive().optional(), results: z.array(z.object({ key: z.enum(["nasofrontalAngle", "nasolabialAngle", "facialConvexity", "eLineUpper", "eLineLower"]), label: text, value: finite, unit: z.enum(["deg", "ratio"]), band, score: finite.min(0).max(100), verdict, meaning: text })).max(5) }).optional(),
