@@ -44,6 +44,9 @@ for (const [name, expected] of [
   const digest = createHash("sha256").update(readFileSync(join(app, "public", "mediapipe", name))).digest("hex");
   if (digest !== expected) fail(`The packaged ${name} does not match the pinned model.`);
 }
+const appealParts = [0, 1, 2, 3].map(i => join(app, "public", "models", "clip-b16", `vision_model_quantized.part${i}`));
+if (!appealParts.every(existsSync) || createHash("sha256").update(Buffer.concat(appealParts.map(f => readFileSync(f)))).digest("hex") !== "44eece4fe5fe4e0359a88268a327adf758633a1aade3917690b952bef1501f96") fail("The appeal model is missing or failed integrity verification.");
+if (!existsSync(join(app, "public", "ort", "ort-wasm-simd-threaded.wasm"))) fail("The ONNX Runtime WASM file is missing.");
 const wasm = readdirSync(join(app, "public", "mediapipe", "wasm"));
 if (!wasm.some(name => name.endsWith(".wasm")) || !wasm.some(name => name.endsWith(".js"))) {
   fail("The same-origin MediaPipe WASM loader or binary is missing.");

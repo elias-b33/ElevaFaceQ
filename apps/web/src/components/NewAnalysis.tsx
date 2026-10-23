@@ -6,13 +6,14 @@ import { useRouter } from "next/navigation";
 import { defaultProfileAnchors, type ImageFeatures, type MeasurementDocument, type RatingGender } from "@freeharmony/engine";
 import { downscaleToDataURL, runScan, type ScanOutcome } from "@/lib/scan";
 import { detectAutomatic } from "@/lib/automatic";
+import { measureAppeal, preloadAppeal } from "@/lib/appeal";
 import { getScan, loadProfile, newScanId, saveProfile, saveScan } from "@/lib/store";
 import { genderFromSex } from "@/lib/rating";
 import { scanDocuments } from "@/lib/harmony";
 import { LandmarkPreview, PhotoStage, usePhotoSource } from "./PhotoPicker";
 
 type Step = "gender" | "front" | "side";
-interface FrontDraft { photo: string; aspect: number; doc: MeasurementDocument; image: ImageFeatures | null; outcome: ScanOutcome }
+interface FrontDraft { photo: string; aspect: number; doc: MeasurementDocument; image: ImageFeatures | null; outcome: ScanOutcome; appeal: { version: string; raw: number } | null }
 interface SideDraft { photo: string; aspect: number; doc: MeasurementDocument }
 const paint = () => new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
 const placed = (doc: MeasurementDocument) => Object.values(doc.points).filter(p => p.source !== "template" && (p.confidence ?? 1) >= .3).length;
@@ -31,7 +32,7 @@ export function NewAnalysis() {
   const [front, setFront] = useState<FrontDraft | null>(null);
   const [side, setSide] = useState<SideDraft | null>(null);
   const [busy, setBusy] = useState(false), [progress, setProgress] = useState(""), [error, setError] = useState("");
-  useEffect(() => { const p = loadProfile(); setGender(p.gender ?? genderFromSex(p.sex) ?? null); }, []);
+  useEffect(() => { const p = loadProfile(); setGender(p.gender ?? genderFromSex(p.sex) ?? null); preloadAppeal(); }, []);
   const view = step === "side" ? "side" : "front";
   const run = async (work: () => Promise<void>) => {
     setBusy(true); setError(""); setProgress("Reading your photograph");
@@ -45,7 +46,9 @@ export function NewAnalysis() {
     if (block) throw new Error(`${block.message} ${block.retake}`);
     const { doc, image } = await detectAutomatic({ view: "front", canvas, mesh: outcome.input?.landmarks, onProgress: setProgress });
     if (!doc.automatic || doc.automatic.detected < 20) throw new Error(doc.automatic?.warnings[0] ?? "A usable face could not be found. Try a clearer photo.");
-    setFront({ photo: outcome.photo, aspect: canvas.width / canvas.height, doc, image, outcome });
+    setProgress("Scoring facial appeal");
+    const appeal = outcome.input?.landmarks ? await measureAppeal(canvas, outcome.input.landmarks).catch(() => null) : null;
+    setFront({ photo: outcome.photo, aspect: canvas.width / canvas.height, doc, image, outcome, appeal });
   });
   const analyzeSide = (canvas: HTMLCanvasElement) => run(async () => setSide(await detectSide(canvas, setProgress)));
   const source = usePhotoSource({ disabled: busy, onCanvas: canvas => void (view === "front" ? analyzeFront(canvas) : analyzeSide(canvas)) });
@@ -56,7 +59,7 @@ export function NewAnalysis() {
       const profile = withSide && side ? side : null;
       saveScan({
         id, createdAt: now, result, diagnostic: diagnostic ?? undefined, photo, input: input ?? undefined, imageAspect: front.aspect,
-        gender, imageFeatures: front.image ?? undefined,
+        gender, imageFeatures: front.image ?? undefined, ...(front.appeal ? { appeal: front.appeal } : {}),
         measurements: { version: 1, front: front.doc, ...(profile ? { side: profile.doc } : {}) },
         ...(profile ? { side: { photo: profile.photo, anchors: defaultProfileAnchors(), results: [], at: now, imageAspect: profile.aspect } } : {}),
       });

@@ -71,3 +71,32 @@ const pose = existsSync(poseDst) ? readFileSync(poseDst) : Buffer.from(await (as
 if (createHash("sha256").update(pose).digest("hex") !== poseHash) throw new Error("Pose model integrity check failed.");
 if (!existsSync(poseDst)) writeFileSync(poseDst, pose);
 console.log("[assets] pose model verified");
+
+// Pinned facial-appeal vision model: CLIP ViT-B/16 image encoder (MIT, OpenAI;
+// ONNX export by Xenova). It is split into parts so no static file is large.
+const appealDir = join(app, "public", "models", "clip-b16");
+const appealHash = "44eece4fe5fe4e0359a88268a327adf758633a1aade3917690b952bef1501f96";
+const appealUrl = "https://huggingface.co/Xenova/clip-vit-base-patch16/resolve/342fdf2f67aded64d138ff074745fb4a5d2bba5f/onnx/vision_model_quantized.onnx";
+const APPEAL_PARTS = 4;
+const appealPart = (i) => join(appealDir, `vision_model_quantized.part${i}`);
+const appealHave = Array.from({ length: APPEAL_PARTS }, (_, i) => appealPart(i)).every(existsSync);
+const appeal = appealHave ? Buffer.concat(Array.from({ length: APPEAL_PARTS }, (_, i) => readFileSync(appealPart(i)))) : Buffer.from(await (async () => {
+  console.log("[assets] downloading appeal model …");
+  const response = await fetch(appealUrl);
+  if (!response.ok) throw new Error(`Appeal model download failed: ${response.status}`);
+  return response.arrayBuffer();
+})());
+if (createHash("sha256").update(appeal).digest("hex") !== appealHash) throw new Error("Appeal model integrity check failed.");
+if (!appealHave) {
+  mkdirSync(appealDir, { recursive: true });
+  const size = Math.ceil(appeal.length / APPEAL_PARTS);
+  for (let i = 0; i < APPEAL_PARTS; i++) writeFileSync(appealPart(i), appeal.subarray(i * size, (i + 1) * size));
+}
+console.log("[assets] appeal model verified");
+
+// ONNX Runtime Web (MIT) WASM runtime for the appeal model, from the frozen install.
+const ortSrc = join(app, "node_modules", "onnxruntime-web", "dist");
+const ortDst = join(app, "public", "ort");
+mkdirSync(ortDst, { recursive: true });
+for (const name of ["ort-wasm-simd-threaded.wasm", "ort-wasm-simd-threaded.mjs"]) cpSync(join(ortSrc, name), join(ortDst, name));
+console.log("[assets] onnxruntime-web runtime copied");

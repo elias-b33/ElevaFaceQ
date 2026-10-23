@@ -179,3 +179,5 @@
   .rating-detail,.rating-method{ break-inside:auto; }
   .measure-row,.assessment-row,.impact-row{ break-inside:avoid; }
 }
+.overall-parts { display:flex; flex-wrap:wrap; gap:6px 18px; margin-top:6px; font-size:14px; color:#6e655a; }
+.overall-parts b { font:20px/1 var(--font-display); font-weight:400; color:#1f1d19; margin-right:4px; }

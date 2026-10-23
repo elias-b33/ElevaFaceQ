@@ -36,6 +36,11 @@ if (!existsSync(poseFile) || createHash("sha256").update(readFileSync(poseFile))
   console.error("Local pose model is missing or failed integrity verification. Run the reviewed asset setup.");
   process.exit(1);
 }
+const appealParts = [0, 1, 2, 3].map(i => join(app, "public", "models", "clip-b16", `vision_model_quantized.part${i}`));
+if (!appealParts.every(existsSync) || createHash("sha256").update(Buffer.concat(appealParts.map(f => readFileSync(f)))).digest("hex") !== "44eece4fe5fe4e0359a88268a327adf758633a1aade3917690b952bef1501f96") {
+  console.error("Local appeal model is missing or failed integrity verification. Run the reviewed asset setup.");
+  process.exit(1);
+}
 if (mode === "start" && !existsSync(join(app, ".next", "BUILD_ID"))) {
   console.error("Build the app first with pnpm build, or use pnpm dev for development.");
   process.exit(1);

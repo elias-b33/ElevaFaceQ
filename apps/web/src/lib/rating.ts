@@ -1,4 +1,4 @@
-import { HARMONY_CATALOG, IDEALS, idealRange, rateFace, type HarmonySettings, type RatingGender, type RatingResult, type Sex } from "@freeharmony/engine";
+import { APPEAL, HARMONY_CATALOG, IDEALS, idealRange, rateFace, type HarmonySettings, type RatingGender, type RatingResult, type Sex } from "@freeharmony/engine";
 import { scanDocuments } from "./harmony";
 import type { StoredScan } from "./store";
 
@@ -11,7 +11,7 @@ export function scanGender(scan: StoredScan): RatingGender {
 }
 /** Rate a study from its current (possibly unsaved) landmark documents. */
 export function rateScan(scan: StoredScan, settings: HarmonySettings = scanDocuments(scan), gender: RatingGender = scanGender(scan)): RatingResult {
-  return rateFace({ gender, front: settings.front, side: settings.side, image: scan.imageFeatures ?? null });
+  return rateFace({ gender, front: settings.front, side: settings.side, image: scan.imageFeatures ?? null, appeal: scan.appeal?.version === APPEAL.version ? scan.appeal.raw : null });
 }
 export const formatScore = (score: number | null | undefined) => score === null || score === undefined ? "—" : score.toFixed(1);
 export function formatRarity(rarity: number): string {

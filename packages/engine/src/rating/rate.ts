@@ -1,13 +1,14 @@
 import { analyzeHarmony } from "../harmony/analyze";
 import type { MeasurementDocument } from "../harmony/types";
 import calibrationData from "./calibration.json";
+import { appealZ, blendOverall } from "./appeal";
 import { VIEW_SHARE, rawCombinedHarmony, rawHarmony, scoreView, type MeasurementScore } from "./harmony";
 import type { RatingGender } from "./ideals";
 import type { ImageFeatures } from "./image-features";
 import { OVERALL_P, PILLAR_LABELS, PILLAR_P, assessmentValue, assessmentsFor, readingOf, type AssessmentDef, type Calibration, type PillarKey } from "./pillars";
 import { itemLabel, percentileOfScore, powerMean, rarityOfScore, scoreFromZ, scoreLabel } from "./scale";
 
-export const RATING_VERSION = "rating-1.1";
+export const RATING_VERSION = "rating-2.0";
 export const CALIBRATION = calibrationData as Calibration;
 
 export interface ScoreSummary { score: number; label: string; percentile: number; rarity: number }
@@ -29,7 +30,12 @@ export interface Impact {
 export interface RatingResult {
   version: string;
   gender: RatingGender;
+  /** Facial appeal blended with structure; structure alone when no appeal prediction exists. */
   overall: ScoreSummary | null;
+  /** Learned model of human attractiveness ratings, from the front photo. */
+  appeal: ScoreSummary | null;
+  /** Power mean of the four measured pillars. Strengths and flaws are changes in this score. */
+  structure: ScoreSummary | null;
   /** Overall score if the five largest flaws reached their ideal. */
   potential: number | null;
   pillars: Record<PillarKey, PillarResult>;
@@ -45,6 +51,8 @@ export interface RateInput {
   front?: MeasurementDocument;
   side?: MeasurementDocument;
   image?: ImageFeatures | null;
+  /** Appeal model prediction for the front photo (see appeal.ts). */
+  appeal?: number | null;
 }
 
 const summary = (score: number | null): ScoreSummary | null => score === null || !Number.isFinite(score) ? null : { score, label: scoreLabel(score), percentile: percentileOfScore(score), rarity: rarityOfScore(score) };
@@ -108,6 +116,8 @@ export function rateFace(input: RateInput, cal: Calibration = CALIBRATION): Rati
     return values.every(v => v !== null) ? powerMean(values.map(score => ({ score: score!, weight: 1 })), OVERALL_P) : null;
   };
   const overall = overallOf(pillarScores);
+  const appeal = input.appeal ?? null;
+  const final = (structure: number | null) => appeal === null || !Number.isFinite(appeal) ? structure : blendOverall(appeal, structure, gender);
 
   // Strengths and flaws: change in the overall score when an item becomes ideal (flaw) or typical (strength).
   const impacts: (Impact & { gain: number; loss: number })[] = [];
@@ -140,7 +150,7 @@ export function rateFace(input: RateInput, cal: Calibration = CALIBRATION): Rati
       const items = pillarItems(key).map(i => fix.has(i.key) ? { ...i, score: 10 } : i);
       p[key] = coverageOf(key) >= .55 ? pillarScore(items, key, gender, cal) : null;
     }
-    potential = overallOf(p);
+    potential = final(overallOf(p));
   }
 
   const pillar = (key: PillarKey): PillarResult => {
@@ -152,7 +162,8 @@ export function rateFace(input: RateInput, cal: Calibration = CALIBRATION): Rati
   };
   return {
     version: RATING_VERSION, gender,
-    overall: summary(overall), potential,
+    overall: summary(final(overall)), potential,
+    appeal: summary(appeal === null ? null : scoreFromZ(appealZ(appeal, gender))), structure: summary(overall),
     pillars: { harmony: pillar("harmony"), angularity: pillar("angularity"), dimorphism: pillar("dimorphism"), features: pillar("features") },
     harmony: { front: summary(front.length ? harmonyScore(rawHarmony(front), "front", gender, cal) : null), side: summary(side.length ? harmonyScore(rawHarmony(side), "side", gender, cal) : null), measurements: measurementItems },
     strengths, flaws,

@@ -9,13 +9,16 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },
-  "engines": { "node": "24.x" },
+  "engines": {
+    "node": "24.x"
+  },
   "packageManager": "pnpm@11.25.0",
   "dependencies": {
     "@freeharmony/advice": "workspace:*",
     "@freeharmony/engine": "workspace:*",
     "@mediapipe/tasks-vision": "^0.10.21",
     "next": "16.4.2",
+    "onnxruntime-web": "1.22.0",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "zod": "^3.24.2"

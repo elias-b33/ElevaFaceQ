@@ -1,11 +1,12 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { HARMONY_CATALOG, itemLabel, type HarmonyView, type Impact, type PillarKey, type RatingGender } from "@freeharmony/engine";
+import { APPEAL, HARMONY_CATALOG, itemLabel, type HarmonyView, type Impact, type PillarKey, type RatingGender } from "@freeharmony/engine";
 import { saveScan, type StoredScan } from "@/lib/store";
 import { scanDocuments } from "@/lib/harmony";
 import { formatImpact, formatItemScore, formatRange, formatRarity, formatScore, formatStanding, formatValue, rateScan, scanGender } from "@/lib/rating";
+import { measureSavedAppeal } from "@/lib/appeal";
 import { LandmarkPreview } from "./PhotoPicker";
 import { AnatomyPlate } from "./AnatomyPlate";
 
@@ -28,6 +29,21 @@ export function RatingReport({ initial }: { initial: StoredScan }) {
   const settings = useMemo(() => scanDocuments(scan), [scan]);
   const rating = useMemo(() => rateScan(scan, settings, gender), [scan, settings, gender]);
   const overall = rating.overall;
+  // Ratings saved before the appeal model (or with an older version) are scored once, in the browser.
+  const needsAppeal = scan.appeal?.version !== APPEAL.version && !!scan.photo && !!scan.input?.landmarks?.length;
+  const [appealState, setAppealState] = useState<"idle" | "busy" | "failed">("idle");
+  useEffect(() => {
+    if (!needsAppeal) return;
+    let cancelled = false;
+    setAppealState("busy");
+    measureSavedAppeal(scan.photo, scan.input!.landmarks).then(appeal => {
+      if (cancelled) return;
+      const updated = { ...scan, appeal };
+      try { saveScan(updated); } catch { /* shown for this visit even if it cannot be stored */ }
+      setScan(updated); setAppealState("idle");
+    }).catch(() => { if (!cancelled) setAppealState("failed"); });
+    return () => { cancelled = true; };
+  }, [needsAppeal, scan]);
   const setGender = (next: RatingGender) => {
     const updated = { ...scan, gender: next };
     try { saveScan(updated); setMessage(""); } catch { setMessage("The change applies now but could not be saved in this browser."); }
@@ -60,6 +76,7 @@ export function RatingReport({ initial }: { initial: StoredScan }) {
         {overall ? <>
           <div className="overall-score"><strong>{formatScore(overall.score)}</strong><span>/ 10</span></div>
           <p className="overall-label">{overall.label}</p>
+          <div className="overall-parts">{rating.appeal ? <span><b>{formatScore(rating.appeal.score)}</b> facial appeal</span> : <span>{appealState === "busy" ? "Scoring facial appeal…" : appealState === "failed" ? "Facial appeal unavailable" : "Facial appeal not measured"}</span>}{rating.structure && <span><b>{formatScore(rating.structure.score)}</b> structure</span>}</div>
           <div className="overall-scale" aria-hidden="true"><i style={{ left: `${overall.score * 10}%` }}/><span style={{ left: "50%" }}>5 · average</span><span style={{ left: "70%" }}>7</span><span style={{ left: "80%" }}>8</span></div>
           <div className="overall-stats">
             <div><strong>{formatStanding(overall.percentile)}</strong><span>of people</span></div>
@@ -83,7 +100,7 @@ export function RatingReport({ initial }: { initial: StoredScan }) {
     </section>
 
     <section className="impact-section">
-      <ImpactList title="Strengths" kicker="WHAT LIFTS YOUR SCORE" items={rating.strengths} empty="No standout strengths yet. Check that the landmarks sit correctly."/>
+      <ImpactList title="Strengths" kicker="WHAT LIFTS YOUR STRUCTURE" items={rating.strengths} empty="No standout strengths yet. Check that the landmarks sit correctly."/>
       <ImpactList title="Flaws" kicker="WHAT HOLDS IT BACK" items={rating.flaws} empty="No significant flaws were found." more={scan.result.ok ? { href: `/plan/${scan.id}`, label: "How to improve →" } : undefined}/>
     </section>
 
@@ -120,10 +137,10 @@ export function RatingReport({ initial }: { initial: StoredScan }) {
     <section className="rating-method">
       <div><span className="folio">METHOD</span><h2>How your rating works</h2></div>
       <div className="method-columns">
-        <p><b>The scale.</b> Scores run from 0 to 10 with 5 as the population average. The scale is percentile-based: a 7 is about 1 in 18 people, an 8 about 1 in 250, and a 3 is as uncommon as a 7.</p>
-        <p><b>Harmony</b> scores 66 front and profile measurements against ideal ranges for your gender, weighted by their influence and by how directly the landmarks were observed. The front counts for 60% and the profile for 40%.</p>
-        <p><b>Angularity, Dimorphism and Features</b> combine geometry with in-photo comparisons of skin, eyes, brows, beard, hair and symmetry. Your <b>overall</b> rating is a power mean of the four pillars, which weighs your weakest pillar most.</p>
-        <p><b>Calibration.</b> Ranges and scales were fitted with this app&apos;s own measurements on 102 adults from the Face Research Lab London Set (CC BY 4.0). On those faces the overall rating correlated with average human attractiveness ratings at about 0.5 (Spearman, within each sex; measured on the same data, so treat it as optimistic).</p>
+        <p><b>Overall</b> is 80% facial appeal and 20% structure. <b>Facial appeal</b> comes from a model trained on 5,500 faces, each rated by 60 people (SCUT-FBP5500), that reads your whole front photo the way raters do. <b>Structure</b> combines the four measured pillars below and explains the score; strengths and flaws show how each item moves it.</p>
+        <p><b>The scale.</b> Scores run from 0 to 10 with 5 as the average adult. It is percentile-based: a 7 is about 1 in 18 people, an 8 about 1 in 250, and a 3 is as uncommon as a 7.</p>
+        <p><b>Harmony</b> scores 66 front and profile measurements against ideal ranges for your gender. <b>Angularity, Dimorphism and Features</b> combine geometry with in-photo comparisons of skin, eyes, brows, beard, hair and symmetry.</p>
+        <p><b>Accuracy.</b> On 102 adults it never saw (Face Research Lab London Set), facial appeal ranked people like human raters at about 0.70 for men and 0.59 for women (Spearman, within each sex). Photo quality matters: sharp, front-on, evenly lit photos taken from a distance give the most reliable result.</p>
       </div>
       {rating.notes.length > 0 && <ul className="flow-notes">{rating.notes.map(n => <li key={n}>{n}</li>)}</ul>}
       <p className="method-disclaimer">A structured guide, not a verdict. Lens distance, lighting, expression and head angle change the measurements, so compare photos taken the same way. Estimated landmarks are weighted less; review them for the most accurate result. Independent work, not affiliated with FaceIQ Labs.</p>

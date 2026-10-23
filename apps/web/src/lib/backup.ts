@@ -58,6 +58,7 @@ const scan = z.object({
   measurements: measurements.optional(),
   gender: z.enum(["male", "female"]).optional(),
   imageFeatures: imageFeatures.optional(),
+  appeal: z.object({ version: z.string().max(40), raw: z.number().finite() }).optional(),
   side: z.object({ photo, anchors, at: finite, imageAspect: finite.positive().optional(), results: z.array(z.object({ key: z.enum(["nasofrontalAngle", "nasolabialAngle", "facialConvexity", "eLineUpper", "eLineLower"]), label: text, value: finite, unit: z.enum(["deg", "ratio"]), band, score: finite.min(0).max(100), verdict, meaning: text })).max(5) }).optional(),
 });
 const profile = z.object({

@@ -69,6 +69,8 @@ export interface StoredScan {
   gender?: RatingGender;
   /** Photo-based measurements from the original front photo (skin, eyes, hair, symmetry). */
   imageFeatures?: ImageFeatures;
+  /** Appeal model prediction for the front photo, tagged with the model version. */
+  appeal?: { version: string; raw: number };
   /** Optional AI annotations — never part of the score itself. */
   ai?: {
     sanity?: import("./ai/schema").SanityAnnotation;
