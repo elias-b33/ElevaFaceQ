@@ -6,6 +6,7 @@ import "./campaign.css";
 import "./interiors.css";
 import "./rating.css";
 import "./home.css";
+import "./site.css";
 
 export const metadata: Metadata = {
   title: { default: "ElevaFace — Elevate your face", template: "%s | ElevaFace" },

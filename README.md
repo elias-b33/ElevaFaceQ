@@ -56,9 +56,12 @@ Use the same browser and the exact same address to keep your history together.
 - **Your ratings.** Every rating stays in this browser, with a trend across
   ratings. Version-4 JSON backups include photos, landmarks, the rated gender and
   the photo measurements. Older backups and scans still open.
-- The Private Atlas campaign site with restrained motion, keyboard navigation
-  and support for the reduced-motion preference. CSV/JSON exports, a
-  self-contained offline HTML report and Print / PDF through the browser.
+- A consistent, responsive design across the landing page, rating flow,
+  report, landmarks page, ratings history, measurement library, photo guide,
+  privacy page and settings, with keyboard navigation and support for the
+  reduced-motion preference. A "How to improve" page lists practical,
+  non-invasive steps. CSV/JSON exports, a self-contained offline HTML report
+  and Print / PDF through the browser.
 - The original 18 frontal metrics and the classic FreeHarmony results remain
   available for studies that have them.
 - Optional local Ollama integration, off by default. No cloud AI integration.

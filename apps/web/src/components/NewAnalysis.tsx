@@ -69,23 +69,23 @@ export function NewAnalysis() {
   const notes = view === "front" && front ? [...front.outcome.result.gates.blocking, ...front.outcome.result.gates.warnings].map(g => `${g.message} ${g.retake}`) : side && view === "side" ? side.doc.automatic?.warnings.filter(w => !w.startsWith("Ear opening")) ?? [] : [];
 
   return <main className="capture-page rating-flow">
-    <div className="capture-heading"><Link className="back-link" href="/">← Home</Link><p className="eyebrow">NEW RATING / STEP {String(current + 1).padStart(2, "0")}</p><h1>Rate your <em>face.</em></h1><p>A front photo and a side profile, measured on this device against ideal ranges for your gender. Rated out of 10 across harmony, angularity, dimorphism and features.</p></div>
-    <nav className="study-steps" aria-label="Rating steps">{STEPS.map((s, i) => <button key={s.key} type="button" aria-current={i === current ? "step" : undefined} disabled={busy || i > current || s.key === "rating"} onClick={() => setStep(s.key as Step)}><b>{String(i + 1).padStart(2, "0")}</b> {s.label}</button>)}</nav>
+    <div className="capture-heading"><Link className="back-link" href="/">← Home</Link><p className="eyebrow">STEP {current + 1} OF 3</p><h1>Rate your <em>face.</em></h1><p>Two photos, about a minute. Everything is analysed on this device and nothing is uploaded.</p></div>
+    <nav className="study-steps" aria-label="Rating steps">{STEPS.map((s, i) => <button key={s.key} type="button" aria-current={i === current ? "step" : undefined} disabled={busy || i > current || s.key === "rating"} onClick={() => setStep(s.key as Step)}><b>{i + 1}</b> {s.label}</button>)}</nav>
     {step === "gender" ? <section className="gender-step">
-      <div><span className="folio">01 / YOUR REFERENCE</span><h2>Who is being rated?</h2><p>Ideal ranges and the dimorphism pillar differ between men and women. You can change this later from the rating itself.</p></div>
-      <div className="gender-options" role="radiogroup" aria-label="Gender">{(["male", "female"] as const).map(g => <button key={g} type="button" role="radio" aria-checked={gender === g} className={gender === g ? "is-selected" : ""} onClick={() => setGender(g)}><span className="gender-mark">{g === "male" ? "M" : "F"}</span><strong>{g === "male" ? "Male" : "Female"}</strong><small>{g === "male" ? "Masculine ideal ranges and dimorphism" : "Feminine ideal ranges and dimorphism"}</small></button>)}</div>
-      <button className="primary-button" disabled={!gender} onClick={() => setStep("front")}>Continue to your front photo <span>↗</span></button>
+      <div><span className="folio">GENDER</span><h2>Who is being rated?</h2><p>Ideal ranges and the dimorphism pillar differ between men and women. You can switch this later on your report.</p></div>
+      <div className="gender-options" role="radiogroup" aria-label="Gender">{(["male", "female"] as const).map(g => <button key={g} type="button" role="radio" aria-checked={gender === g} className={gender === g ? "is-selected" : ""} onClick={() => setGender(g)}><span className="gender-mark">{g === "male" ? "M" : "F"}</span><strong>{g === "male" ? "Male" : "Female"}</strong><small>{g === "male" ? "Rated against male ideals" : "Rated against female ideals"}</small></button>)}</div>
+      <button className="primary-button" disabled={!gender} onClick={() => setStep("front")}>Continue to your front photo <span>→</span></button>
     </section> : <div className="capture-layout">
-      <PhotoStage source={source} view={view} busy={busy} step={progress} label={draft ? "LANDMARKS MAPPED" : "PRIVATE PHOTO STUDIO"} mirrorPreview={view === "front"} preview={draft ? <LandmarkPreview photo={draft.photo} aspect={draft.aspect} doc={draft.doc} alt={`Your ${view} photo with detected landmarks`}/> : undefined}/>
+      <PhotoStage source={source} view={view} busy={busy} step={progress} label={draft ? "Landmarks mapped" : "On-device"} mirrorPreview={view === "front"} preview={draft ? <LandmarkPreview photo={draft.photo} aspect={draft.aspect} doc={draft.doc} alt={`Your ${view} photo with detected landmarks`}/> : undefined}/>
       <section className="capture-copy">
-        <span className="folio">{draft ? (view === "front" ? "02 / FRONT MAPPED" : "03 / PROFILE MAPPED") : view === "front" ? "02 / THE FRONT PHOTO" : "03 / THE SIDE PROFILE"}</span>
+        <span className="folio">{draft ? (view === "front" ? "FRONT PHOTO · DONE" : "SIDE PROFILE · DONE") : view === "front" ? "FRONT PHOTO" : "SIDE PROFILE"}</span>
         {draft ? <>
           <h2>{view === "front" ? <>Front <em>mapped.</em></> : <>Profile <em>mapped.</em></>}</h2>
           <div className="detection-counts"><div><strong>{placed(draft.doc)}</strong><span>landmarks placed</span></div><div><strong>{draft.doc.automatic?.estimated ?? 0}</strong><span>estimated points</span></div><div><strong>{view === "front" ? (front!.outcome.result.gates.blocking.length ? "Check" : "Pass") : side!.doc.automatic?.facing === "left" ? "Left" : "Right"}</strong><span>{view === "front" ? "photo checks" : "facing"}</span></div></div>
           {notes.length > 0 && <ul className="flow-notes">{notes.slice(0, 4).map(n => <li key={n}>{n}</li>)}</ul>}
-          <p>You can fine-tune every point later. Estimated points are drawn in amber.</p>
-          {view === "front" ? <button className="primary-button" onClick={() => setStep("side")}>Continue to your side profile <span>↗</span></button> : <button className="primary-button" onClick={() => finish(true)}>See my rating <span>↗</span></button>}
-          <button className="text-button" onClick={() => source.choose()}>Choose another photo ↗</button>
+          <p className="flow-hint">You can fine-tune every point later. Estimated points are drawn in amber.</p>
+          {view === "front" ? <button className="primary-button" onClick={() => setStep("side")}>Continue to your side profile <span>→</span></button> : <button className="primary-button" onClick={() => finish(true)}>See my rating <span>→</span></button>}
+          <button className="text-button" onClick={() => source.choose()}>Choose another photo</button>
         </> : <>
           <h2>{view === "front" ? <>Face the camera.<br/>Neutral and level.</> : <>Turn fully<br/>sideways.</>}</h2>
           <ol className="capture-notes">{(view === "front" ? [
@@ -97,13 +97,13 @@ export function NewAnalysis() {
             ["Hair behind the ear.", " The forehead, nose, lips, chin and neck outline should meet a plain background."],
             ["Same distance and light", " as your front photo, camera at eye level."],
           ]).map(([b, t], i) => <li key={b}><span>{String(i + 1).padStart(2, "0")}</span><p><b>{b}</b>{t}</p></li>)}</ol>
-          <div className="capture-actions"><button className="primary-button" disabled={busy || source.opening} onClick={() => source.choose()}>Choose a {view} photo <span>↗</span></button>{source.camera ? <><button className="primary-button" disabled={busy || source.count !== null} onClick={source.capture}>Capture in 3 seconds</button><button className="secondary-button" onClick={source.cancelCamera}>Close camera</button></> : <button className="secondary-button" disabled={busy || source.opening} onClick={() => void source.startCamera()}>{source.opening ? "Opening camera…" : "Use camera"}</button>}</div>
-          <p className="upload-hint">Or drop a photo onto the plate. JPEG, PNG or WebP · up to 20 MB</p>
-          {view === "side" && front && <button className="text-button" onClick={() => finish(false)}>Skip — rate my front photo only ↗</button>}
+          <div className="capture-actions"><button className="primary-button" disabled={busy || source.opening} onClick={() => source.choose()}>Choose a {view} photo <span>→</span></button>{source.camera ? <><button className="primary-button" disabled={busy || source.count !== null} onClick={source.capture}>Capture in 3 seconds</button><button className="secondary-button" onClick={source.cancelCamera}>Close camera</button></> : <button className="secondary-button" disabled={busy || source.opening} onClick={() => void source.startCamera()}>{source.opening ? "Opening camera…" : "Use camera"}</button>}</div>
+          <p className="upload-hint">Or drag a photo onto the frame. JPEG, PNG or WebP, up to 20 MB.</p>
+          {view === "side" && front && <button className="text-button" onClick={() => finish(false)}>Skip and rate my front photo only</button>}
         </>}
         {source.fileInput}
         {(error || source.error) && <p className="report-alert" role="alert">{error || source.error}</p>}
-        <div className="capture-privacy"><span className="privacy-seal">E.</span><p><strong>Private by design.</strong><span>Photos are analysed in your browser. No uploads, no account.</span></p></div>
+        <div className="capture-privacy"><span className="privacy-seal" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><rect x="5" y="10.5" width="14" height="10" rx="2.5" stroke="currentColor" strokeWidth="1.6"/><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5" stroke="currentColor" strokeWidth="1.6"/></svg></span><p><strong>Private by design.</strong><span>Photos are analysed in your browser. No uploads, no account.</span></p></div>
       </section>
     </div>}
   </main>;
@@ -131,14 +131,14 @@ export function ProfileAttach({ id }: { id: string }) {
   };
   const notes = draft?.doc.automatic?.warnings.filter(w => !w.startsWith("Ear opening")) ?? [];
   return <main className="capture-page rating-flow">
-    <div className="capture-heading"><Link className="back-link" href={`/results/${id}`}>← Your rating</Link><p className="eyebrow">YOUR RATING / THE PROFILE</p><h1>Add your <em>profile.</em></h1><p>The side profile completes Harmony and adds the chin, under-chin and brow-ridge assessments.</p></div>
+    <div className="capture-heading"><Link className="back-link" href={`/results/${id}`}>← Your rating</Link><p className="eyebrow">SIDE PROFILE</p><h1>Add your <em>profile.</em></h1><p>The side profile completes Harmony and adds the chin, under-chin and brow-ridge assessments.</p></div>
     <div className="capture-layout">
-      <PhotoStage source={source} view="side" busy={busy} step={progress} label={draft ? "LANDMARKS MAPPED" : "PRIVATE PHOTO STUDIO"} mirrorPreview={false} preview={draft ? <LandmarkPreview photo={draft.photo} aspect={draft.aspect} doc={draft.doc} alt="Your side photo with detected landmarks"/> : undefined}/>
+      <PhotoStage source={source} view="side" busy={busy} step={progress} label={draft ? "Landmarks mapped" : "On-device"} mirrorPreview={false} preview={draft ? <LandmarkPreview photo={draft.photo} aspect={draft.aspect} doc={draft.doc} alt="Your side photo with detected landmarks"/> : undefined}/>
       <section className="capture-copy">
-        <span className="folio">{draft ? "PROFILE MAPPED" : "THE SIDE PROFILE"}</span>
+        <span className="folio">{draft ? "SIDE PROFILE · DONE" : "SIDE PROFILE"}</span>
         <h2>{draft ? <>Profile <em>mapped.</em></> : <>Turn fully<br/>sideways.</>}</h2>
-        {draft ? <>{notes.length > 0 && <ul className="flow-notes">{notes.slice(0, 4).map(n => <li key={n}>{n}</li>)}</ul>}<button className="primary-button" onClick={save}>Update my rating <span>↗</span></button><button className="text-button" onClick={() => source.choose()}>Choose another photo ↗</button></>
-          : <><p>One eye and the near ear visible, chin level, neck uncovered, against a plain background.</p><div className="capture-actions"><button className="primary-button" disabled={busy} onClick={() => source.choose()}>Choose a side photo <span>↗</span></button>{source.camera ? <><button className="primary-button" disabled={busy || source.count !== null} onClick={source.capture}>Capture in 3 seconds</button><button className="secondary-button" onClick={source.cancelCamera}>Close camera</button></> : <button className="secondary-button" disabled={busy || source.opening} onClick={() => void source.startCamera()}>{source.opening ? "Opening camera…" : "Use camera"}</button>}</div></>}
+        {draft ? <>{notes.length > 0 && <ul className="flow-notes">{notes.slice(0, 4).map(n => <li key={n}>{n}</li>)}</ul>}<button className="primary-button" onClick={save}>Update my rating <span>→</span></button><button className="text-button" onClick={() => source.choose()}>Choose another photo</button></>
+          : <><p>One eye and the near ear visible, chin level, neck uncovered, against a plain background.</p><div className="capture-actions"><button className="primary-button" disabled={busy} onClick={() => source.choose()}>Choose a side photo <span>→</span></button>{source.camera ? <><button className="primary-button" disabled={busy || source.count !== null} onClick={source.capture}>Capture in 3 seconds</button><button className="secondary-button" onClick={source.cancelCamera}>Close camera</button></> : <button className="secondary-button" disabled={busy || source.opening} onClick={() => void source.startCamera()}>{source.opening ? "Opening camera…" : "Use camera"}</button>}</div></>}
         {source.fileInput}
         {(error || source.error) && <p className="report-alert" role="alert">{error || source.error}</p>}
       </section>

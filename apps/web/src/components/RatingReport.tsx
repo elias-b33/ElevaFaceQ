@@ -51,8 +51,8 @@ export function RatingReport({ initial }: { initial: StoredScan }) {
 
     <section className="rating-hero">
       <div className="rating-photos">
-        <figure>{scan.photo ? <LandmarkPreview photo={scan.photo} aspect={scan.imageAspect ?? 1} doc={showPoints ? settings.front : undefined} alt="Your front photo"/> : <AnatomyPlate/>}<figcaption><span>01 / FRONT</span><span>{rating.harmony.front ? `HARMONY ${formatScore(rating.harmony.front.score)}` : "NOT MEASURED"}</span></figcaption></figure>
-        <figure>{scan.side?.photo ? <LandmarkPreview photo={scan.side.photo} aspect={scan.side.imageAspect ?? 1} doc={showPoints ? settings.side : undefined} alt="Your side profile photo"/> : <Link className="add-profile-plate" href={`/scan/side?attach=${scan.id}`}><AnatomyPlate view="side"/><span>Add your side profile ↗</span></Link>}<figcaption><span>02 / PROFILE</span><span>{rating.harmony.side ? `HARMONY ${formatScore(rating.harmony.side.score)}` : "ADD A PROFILE"}</span></figcaption></figure>
+        <figure>{scan.photo ? <LandmarkPreview photo={scan.photo} aspect={scan.imageAspect ?? 1} doc={showPoints ? settings.front : undefined} alt="Your front photo"/> : <AnatomyPlate/>}<figcaption><span>FRONT</span><span>{rating.harmony.front ? `HARMONY ${formatScore(rating.harmony.front.score)}` : "NOT MEASURED"}</span></figcaption></figure>
+        <figure>{scan.side?.photo ? <LandmarkPreview photo={scan.side.photo} aspect={scan.side.imageAspect ?? 1} doc={showPoints ? settings.side : undefined} alt="Your side profile photo"/> : <Link className="add-profile-plate" href={`/scan/side?attach=${scan.id}`}><AnatomyPlate view="side"/><span>Add your side profile ↗</span></Link>}<figcaption><span>PROFILE</span><span>{rating.harmony.side ? `HARMONY ${formatScore(rating.harmony.side.score)}` : "ADD A PROFILE"}</span></figcaption></figure>
         <button className="text-button points-toggle" onClick={() => setShowPoints(v => !v)}>{showPoints ? "Hide landmarks" : "Show landmarks"}</button>
       </div>
       <div className="rating-overall">
@@ -84,7 +84,7 @@ export function RatingReport({ initial }: { initial: StoredScan }) {
 
     <section className="impact-section">
       <ImpactList title="Strengths" kicker="WHAT LIFTS YOUR SCORE" items={rating.strengths} empty="No standout strengths yet. Check that the landmarks sit correctly."/>
-      <ImpactList title="Flaws" kicker="WHAT HOLDS IT BACK" items={rating.flaws} empty="No significant flaws were found."/>
+      <ImpactList title="Flaws" kicker="WHAT HOLDS IT BACK" items={rating.flaws} empty="No significant flaws were found." more={scan.result.ok ? { href: `/plan/${scan.id}`, label: "How to improve →" } : undefined}/>
     </section>
 
     <section id="harmony" className="rating-detail">
@@ -127,12 +127,12 @@ export function RatingReport({ initial }: { initial: StoredScan }) {
       </div>
       {rating.notes.length > 0 && <ul className="flow-notes">{rating.notes.map(n => <li key={n}>{n}</li>)}</ul>}
       <p className="method-disclaimer">A structured guide, not a verdict. Lens distance, lighting, expression and head angle change the measurements, so compare photos taken the same way. Estimated landmarks are weighted less; review them for the most accurate result. Independent work, not affiliated with FaceIQ Labs.</p>
-      <div className="method-links"><Link href={`/results/${scan.id}/landmarks`}>Adjust landmarks & measurements ↗</Link><Link href="/measurements">Browse all definitions ↗</Link>{scan.result.overall !== null && scan.result.metrics.length > 0 && <Link href={`/results/${scan.id}/classic`}>Original FreeHarmony metrics ↗</Link>}</div>
+      <div className="method-links"><Link href={`/results/${scan.id}/landmarks`}>Adjust landmarks & measurements ↗</Link><Link href="/measurements">Browse all measurements ↗</Link></div>
     </section>
   </main>;
 }
 
-function ImpactList({ title, kicker, items, empty }: { title: string; kicker: string; items: Impact[]; empty: string }) {
+function ImpactList({ title, kicker, items, empty, more }: { title: string; kicker: string; items: Impact[]; empty: string; more?: { href: string; label: string } }) {
   return <div className="impact-column">
     <span className="folio">{kicker}</span><h2>{title}</h2>
     {items.length ? <ol>{items.slice(0, 8).map(item => <li key={item.key} className="impact-row">
@@ -140,5 +140,6 @@ function ImpactList({ title, kicker, items, empty }: { title: string; kicker: st
       <span className="impact-text"><strong>{item.label}</strong><small>{item.reading}{item.value !== undefined && item.unit ? ` · ${formatValue(item.value, item.unit, item.ideal)}` : ""}{item.ideal && item.unit ? ` (ideal ${formatRange(item.ideal, item.unit)})` : ""}</small></span>
       <span className={`impact-value ${item.impact >= 0 ? "is-up" : "is-down"}`}>{formatImpact(item.impact)}</span>
     </li>)}</ol> : <p className="impact-empty">{empty}</p>}
+    {more && <Link className="impact-more" href={more.href}>{more.label}</Link>}
   </div>;
 }

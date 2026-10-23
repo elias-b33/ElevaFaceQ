@@ -78,11 +78,11 @@ export function PhotoStage({ source, view, busy, step, preview, label, mirrorPre
   preview?: ReactNode; label: string; mirrorPreview: boolean;
 }) {
   return <section className={`capture-stage ${source.dragging ? "is-dragging" : ""}`} {...source.drop}>
-    <div className="capture-stage-label"><span>{view === "front" ? "PLATE I — EN FACE" : "PLATE II — PROFILE"}</span><span>{label}</span></div>
+    <div className="capture-stage-label"><span>{view === "front" ? "Front photo" : "Side profile"}</span><span>{label}</span></div>
     <video ref={source.video} muted playsInline className={mirrorPreview ? "camera-mirror" : ""} style={{ display: source.camera ? "block" : "none" }}/>
-    {!source.camera && (preview ?? <div className="capture-art"><AnatomyPlate view={view}/><span>{view === "front" ? "Face the lens. Find your light." : "A true 90° profile."}</span></div>)}
+    {!source.camera && (preview ?? <div className="capture-art"><AnatomyPlate view={view}/><span>{view === "front" ? "Face the camera, straight on" : "Turn a full 90°"}</span></div>)}
     {source.count !== null && <span className="capture-count">{source.count}</span>}
     {busy && <div className="detection-progress" role="status" aria-live="polite"><span className="detect-spinner"/><strong>{step || "Analysing"}</strong><p>Your photo is processed on this device. Nothing is uploaded.</p></div>}
-    <div className="capture-stage-foot"><span>{view === "front" ? "NEUTRAL EXPRESSION · EYE LEVEL" : "LEFT OR RIGHT FACING · EAR VISIBLE"}</span><span>DROP A PHOTO HERE</span></div>
+    <div className="capture-stage-foot"><span>{view === "front" ? "Neutral expression · eye level" : "Either direction · ear visible"}</span><span>Drop a photo here</span></div>
   </section>;
 }
