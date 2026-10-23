@@ -1,5 +1,6 @@
 import { seedDocument } from "./landmarks";
 import type { HarmonyView, MeasurementDocument, NamedPoint, XY } from "./types";
+import { detectProfile, type PoseLandmark } from "./profile-detect";
 
 export interface SegmentationPlane { width: number; height: number; categories: Uint8Array }
 export interface PixelPlane { width: number; height: number; data: Uint8Array | Uint8ClampedArray }
@@ -10,6 +11,8 @@ export interface AutomaticInput {
   segmentation?: SegmentationPlane;
   pixels?: PixelPlane;
   mesh?: readonly (XY & { z?: number })[];
+  /** Optional body-pose landmarks (normalized), used as eye/ear/mouth priors in profiles. */
+  pose?: readonly PoseLandmark[];
   at?: number;
 }
 type Box = { x0: number; x1: number; y0: number; y1: number; count: number };
@@ -162,112 +165,13 @@ export function automaticLandmarks(input: AutomaticInput): MeasurementDocument {
     warnings.push("Hood, bridge and faint crease positions are estimates. Inspect these small features before relying on their ratios.");
     return finish(doc, warnings, true, input.at ?? 0);
   }
-  if (!seg || !face) { warnings.push("No usable face-skin region was found for the profile. Use a clear side photograph with the face and neck visible."); return finish(doc, warnings, !!mesh?.length, input.at ?? 0); }
-  const profileSeg = seg;
-  const y0 = face.box.y0 / (seg.height - 1), y1 = face.box.y1 / (seg.height - 1), h = y1 - y0;
-  const raw = sampler(seg, input, face);
-  function prominence(forward: boolean) {
-    const curve = (y: number) => { const x = raw.curve(y, forward); return forward ? x : -x; };
-    let best = -Infinity;
-    for (let y = y0 + h * .27; y < y0 + h * .67; y += 1 / profileSeg.height) {
-      const x = curve(y), neighbors = [curve(Math.max(y0 + h * .1, y - h * .13)), curve(Math.min(y1, y + h * .17))];
-      if (Number.isFinite(x) && neighbors.every(Number.isFinite)) best = Math.max(best, x - mean(neighbors));
-    }
-    return best;
-  }
-  let left = prominence(false) > prominence(true);
-  if (mesh?.[4] && mesh[168] && Math.abs(mesh[4].x - mesh[168].x) * aspect > h * .05) left = mesh[4].x < mesh[168].x;
-  const sample = sampler(seg, input, face, left), curve = sample.edgeCurve;
-  const canonical = (p: XY) => ({ x: (left ? 1 - p.x : p.x) * aspect, y: p.y });
-  const set = (key: string, u: number, y: number, source: NamedPoint["source"], quality: number, evidence: string) => put(key, left ? 1 - u / aspect : u / aspect, y, source, quality, evidence);
-  function extremum(lo: number, hi: number, maximize: boolean) {
-    let best = { x: NaN, y: NaN }, value = maximize ? -Infinity : Infinity;
-    for (let y = clamp(lo, y0, y1); y <= Math.min(hi, y1); y += 1 / profileSeg.height) {
-      const x = curve(y); if (!Number.isFinite(x)) continue;
-      if (maximize ? x > value : x < value) { best = { x, y }; value = x; }
-    }
-    return best;
-  }
-  const meshAt = (i: number) => mesh?.[i] ? canonical(mesh[i]!) : undefined;
-  const atHeight = (i: number, fallback: { x: number; y: number }) => {
-    const p = meshAt(i); return p && p.y > y0 && p.y < y1 ? { x: curve(p.y), y: p.y } : fallback;
-  };
-  const meshTip = meshAt(4);
-  const tip = extremum(meshTip ? meshTip.y - h * .045 : y0 + h * .42, meshTip ? meshTip.y + h * .045 : y0 + h * .7, true);
-  if (!Number.isFinite(tip.x)) { warnings.push("The profile contour could not be traced. Retake against a plain contrasting background."); return finish(doc, warnings, !!mesh?.length, input.at ?? 0); }
-  const root = atHeight(168, extremum(y0 + h * .3, tip.y - h * .065, false));
-  const brow = atHeight(9, extremum(Math.max(y0 + h * .24, root.y - h * .15), root.y - h * .025, true));
-  const upperAnchor = meshAt(0);
-  const base = extremum(tip.y + h * .055, upperAnchor ? Math.min(upperAnchor.y, tip.y + h * .18) : tip.y + h * .18, false);
-  const lipAt = (i: number, lo: number, hi: number) => { const p = meshAt(i); return p ? extremum(p.y - h * .02, p.y + h * .025, true) : extremum(lo, hi, true); };
-  const upper = extremum(base.y + h * .02, base.y + h * .10, true);
-  const lower = lipAt(17, upper.y + h * .045, upper.y + h * .13);
-  const chin = extremum(Math.max(lower.y + h * .12, y0 + h * .82), y0 + h * .97, true);
-  const fold = atHeight(18, extremum(lower.y + h * .035, chin.y - h * .025, false));
-  const mentonY = y1 - h * .005;
-  const menton = { x: curve(mentonY - h * .012), y: mentonY };
-  for (const [key, p, quality] of [["pronasale", tip, .76], ["nasion", root, .53], ["glabella", brow, .53], ["subnasale", base, .57], ["upperLip", upper, .55], ["lowerLip", lower, .55], ["sublabiale", fold, .48], ["pogonion", chin, .61], ["menton", menton, .57]] as const) set(key, p.x, p.y, "contour", quality, "Extremum on the segmented visible profile contour; check the silhouette");
-  set("forehead", curve(y0 + h * .1), y0 + h * .1, "contour", .55, "Upper visible forehead contour");
-  set("hairline", curve(y0 + h * .012), y0 + h * .012, "estimated", .38, "Top of the visible face-skin mask; check the actual hairline");
-  set("supratip", curve(tip.y - h * .055), tip.y - h * .055, "contour", .58, "Profile contour above the nasal tip");
-  set("infratip", curve(tip.y + h * .025), tip.y + h * .025, "contour", .55, "Profile contour directly below the nasal tip");
-  const colY = tip.y + (base.y - tip.y) * .55;
-  set("columella", curve(colY), colY, "contour", .45, "Underside contour between the nasal tip and base");
-  set("subalare", base.x - h * .065, base.y - h * .035, "estimated", .4, "Nasal-wing attachment estimated behind the nose base");
-  const z = (indices: number[]) => mean(indices.map(i => mesh?.[i]?.z ?? 0));
-  const near = z([33, 133, 159]) <= z([263, 362, 386]) ? "L" : "R";
-  const eyeIndex = near === "L" ? { outer: 33, lower: 145, iris: [468, 469, 470, 471, 472], ear: 234 } : { outer: 263, lower: 374, iris: [473, 474, 475, 476, 477], ear: 454 };
-  let eye = { x: root.x - h * .09, y: root.y - h * .035 };
-  let eyeQuality = .33;
-  if (mesh?.[eyeIndex.outer]) {
-    const ring = eyeIndex.iris.map(i => mesh[i]).filter((p): p is NonNullable<typeof p> => !!p).map(canonical);
-    if (ring.length) eye = ring.reduce((a, b) => a.x > b.x ? a : b);
-    else eye = canonical(mesh[eyeIndex.outer]!);
-    const corner = canonical(mesh[eyeIndex.outer]!), lid = canonical(mesh[eyeIndex.lower]!);
-    set("lateralCanthus", corner.x, corner.y, "mesh", .65, "Near-side eye corner from the face mesh");
-    set("lowerEyelid", lid.x, lid.y, "mesh", .62, "Near-side lower eyelid from the face mesh");
-    eyeQuality = .58;
-  } else {
-    // Search for a local eye-region contrast feature, not skin-color thresholds.
-    let best = 0;
-    if (input.pixels) for (let y = root.y - h * .1; y < root.y + h * .025; y += 2 / input.imageHeight) for (let u = root.x - h * .22; u < root.x - h * .025; u += 2 / input.imageHeight) {
-      if (sample.at(u, y) !== 3) continue;
-      const contrast = mean([sample.gray(u - h * .02, y), sample.gray(u + h * .02, y), sample.gray(u, y - h * .02), sample.gray(u, y + h * .02)]) - sample.gray(u, y);
-      if (contrast > best) { best = contrast; eye = { x: u, y }; }
-    }
-    eyeQuality = best > 18 ? .43 : .33;
-    set("lateralCanthus", eye.x - h * .045, eye.y, "estimated", eyeQuality, "Eye-region contrast candidate; no profile eye landmark model was found");
-    set("lowerEyelid", eye.x, eye.y + h * .025, "estimated", eyeQuality, "Lower-eye position inferred from the eye-region candidate");
-  }
-  set("cornea", eye.x + h * .012, eye.y, "estimated", eyeQuality, "Corneal-front estimate from the visible eye region; not a bony measurement");
-  set("orbitale", eye.x - h * .015, eye.y + h * .055, "estimated", .35, "Soft-tissue orbital reference estimated below the eye; review for Frankfort leveling");
-  let ear = { x: tip.x - h * .57, y: root.y + h * .11 };
-  if (mesh?.[eyeIndex.ear]) { const p = canonical(mesh[eyeIndex.ear]!); if (p.x < root.x - h * .1) ear = { x: p.x - h * .02, y: eye.y + (base.y - eye.y) * .60 }; }
-  // Ear opening is an internal anatomical reference; the segmentation model
-  // cannot identify it. Keep this explicit instead of labelling a prior detected.
-  set("tragus", ear.x, ear.y, "estimated", .34, "Preauricular geometric estimate; check the cartilage in front of the ear opening");
-  set("porion", ear.x - h * .012, ear.y - h * .045, "estimated", .32, "Estimated ear-opening top; check before trusting Frankfort-oriented values");
-  set("earNotch", ear.x + h * .005, ear.y - h * .012, "estimated", .34, "Estimated ear notch and upper jaw-side reference");
-  set("mouthCorner", Math.min(upper.x, lower.x) - h * .09, (upper.y + lower.y) / 2, "estimated", .4, "Mouth corner inferred behind the visible lip silhouette");
-  const jawX = Math.min(ear.x + h * .035, chin.x - h * .22);
-  let jawY = menton.y - h * .13;
-  const nativeX = left ? 1 - jawX / aspect : jawX / aspect;
-  const col = clamp(Math.round(nativeX * (seg.width - 1)), 0, seg.width - 1);
-  for (let y = Math.floor(base.y * seg.height); y < Math.min(seg.height, menton.y * seg.height); y++) if (face.members[y * seg.width + col]) jawY = y / (seg.height - 1);
-  set("gonionUpper", jawX - h * .025, jawY - h * .13, "estimated", .38, "Ascending jaw tangent estimated from the preauricular region and lower face mask");
-  set("gonionLower", jawX + h * .055, jawY + h * .025, "estimated", .4, "Lower jaw tangent estimated from the face-mask boundary; beard may hide it");
-  const neckRows: { x: number; y: number }[] = [];
-  for (let y = menton.y + h * .04; y < Math.min(.98, menton.y + h * .22); y += 1 / seg.height) {
-    const bounds = sample.bounds(y, true); if (bounds && bounds[1] < chin.x - h * .04 && bounds[1] > jawX + h * .04) neckRows.push({ x: bounds[1], y });
-  }
-  if (neckRows.length >= 3) {
-    const cervical = neckRows[Math.floor(neckRows.length * .3)]!, neck = neckRows[Math.floor(neckRows.length * .85)]!;
-    set("cervical", cervical.x, cervical.y, "contour", .45, "Skin contour under the chin at the neck transition");
-    set("neck", neck.x, neck.y, "contour", .53, "Lower front-neck skin boundary");
-  } else warnings.push("The neck contour is cropped or obscured. Include the full chin and front of the neck for the neck angle.");
-  warnings.push("Ear opening, orbital rim, jaw tangents and corneal front are anatomical estimates, not directly detected bone landmarks. Review the highlighted points.");
-  if (!mesh?.length) warnings.push("This true profile used silhouette-assisted placement because the face mesh could not lock on. Eye and internal reference points need closer review.");
-  return finish(doc, warnings, !!mesh?.length, input.at ?? 0, left ? "left" : "right");
+  if (!seg) { warnings.push("No usable face-skin region was found for the profile. Use a clear side photograph with the face and neck visible."); return finish(doc, warnings, !!mesh?.length, input.at ?? 0); }
+  const detected = detectProfile({ ...seg, pixels: input.pixels, pose: input.pose });
+  if ("error" in detected) { warnings.push(detected.error); return finish(doc, warnings, !!mesh?.length, input.at ?? 0); }
+  for (const [key, p] of Object.entries(detected.points)) put(key, p.x, p.y, p.source, p.confidence, p.evidence);
+  warnings.push(...detected.warnings);
+  warnings.push("Ear opening, orbital rim and eye references are estimated from the visible ear, eye and pose cues. Review the highlighted points.");
+  return finish(doc, warnings, !!mesh?.length, input.at ?? 0, detected.facing);
 }
 function finish(doc: MeasurementDocument, warnings: string[], meshFound: boolean, at: number, facing?: "left" | "right") {
   const points = Object.values(doc.points);

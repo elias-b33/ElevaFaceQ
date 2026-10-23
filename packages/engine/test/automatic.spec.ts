@@ -37,7 +37,7 @@ describe("local automatic landmark drafts", () => {
     expect(doc.points.orbitale!.source).toBe("estimated");
     expect(doc.automatic).toMatchObject({at:42,meshFound:false,facing:"right"});
     expect(Object.values(doc.points).every(p => !p.reviewed)).toBe(true);
-    expect(doc.automatic!.warnings.join(" ")).toContain("silhouette-assisted");
+    expect(doc.automatic!.warnings.join(" ")).toContain("Ear opening, orbital rim and eye references are estimated");
     expect(Object.values(doc.points).filter(p => p.source !== "template").length).toBeGreaterThan(20);
   });
   it("places left-facing and right-facing silhouettes symmetrically, including reference orientation", () => {
