@@ -16,6 +16,8 @@ export interface AutomaticInput {
   at?: number;
 }
 type Box = { x0: number; x1: number; y0: number; y1: number; count: number };
+/** Identifies drafts from the segmentation + silhouette pipeline (front and profile). */
+export const AUTOMATIC_ENGINE = "elevaface-auto-2.0";
 const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
 const mean = (values: number[]) => values.reduce((s, n) => s + n, 0) / Math.max(1, values.length);
 const median = (values: number[]) => { const s = values.sort((a, b) => a - b); return s[Math.floor(s.length / 2)] ?? NaN; };
@@ -187,7 +189,7 @@ export function automaticLandmarks(input: AutomaticInput): MeasurementDocument {
 }
 function finish(doc: MeasurementDocument, warnings: string[], meshFound: boolean, at: number, facing?: "left" | "right") {
   const points = Object.values(doc.points);
-  doc.automatic = { engine: "local-mesh-contour-1.0", at, detected: points.filter(p => p.source === "mesh" || p.source === "contour").length, estimated: points.filter(p => p.source === "estimated").length, missing: points.filter(p => p.source === "template" || (p.confidence ?? 1) < .3).length, warnings, meshFound, ...(facing ? { facing } : {}) };
+  doc.automatic = { engine: AUTOMATIC_ENGINE, at, detected: points.filter(p => p.source === "mesh" || p.source === "contour").length, estimated: points.filter(p => p.source === "estimated").length, missing: points.filter(p => p.source === "template" || (p.confidence ?? 1) < .3).length, warnings, meshFound, ...(facing ? { facing } : {}) };
   return doc;
 }
 export function mergeAutomaticDocument(existing: MeasurementDocument | undefined, automatic: MeasurementDocument): MeasurementDocument {

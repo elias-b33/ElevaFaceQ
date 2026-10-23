@@ -1,2 +1,2 @@
-import { PhotoCapture } from "@/components/PhotoCapture";
-export default function ScanPage() { return <PhotoCapture view="front"/>; }
+import { NewAnalysis } from "@/components/NewAnalysis";
+export default function ScanPage() { return <NewAnalysis/>; }

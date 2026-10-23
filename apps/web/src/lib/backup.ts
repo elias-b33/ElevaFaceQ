@@ -38,6 +38,8 @@ const diagnostic = z.object({
   gates:gateReport,metrics:z.array(metric.extend({percentile:z.null()})).max(30),frame,
   bandProfile:z.enum(['faceharmony-parity','literature','calibrated']),sex,engineVersion:text,
 }).refine(d=>!d.gates.pass && d.gates.blocking.length>0,'A provisional diagnostic must retain its failed photo checks.');
+const feature = finite.min(-1000).max(1000).nullable();
+const imageFeatures = z.object({ version: z.literal(1), asymmetry: feature, skinTexture: feature, skinBlotch: feature, underEye: feature, scleraBrightness: feature, scleraRedness: feature, creasing: feature, browContrast: feature, lipContrast: feature, facialHair: feature, hairLength: feature, templeRecession: feature, jawShadow: feature, submalarShadow: feature, lowerFaceWidth: feature, noseAsymmetry: feature });
 const scan = z.object({
   id: z.string().regex(/^scan_[A-Za-z0-9_-]+$/).max(100), createdAt: finite.min(0), photo, imageAspect: finite.positive().max(100).optional(),
   result: z.object({
@@ -54,21 +56,23 @@ const scan = z.object({
   input: z.object({ landmarks: z.array(point3).min(468).max(478), imageWidth:finite.positive().optional(),imageHeight:finite.positive().optional(),mirrored: z.boolean(), blendshapes: z.record(finite).optional(), transformationMatrix: z.array(finite).length(16).optional() }).optional(),
   overrides: z.record(z.string().regex(/^\d{1,3}$/).refine(value => Number(value) < 478), point).optional(),
   measurements: measurements.optional(),
+  gender: z.enum(["male", "female"]).optional(),
+  imageFeatures: imageFeatures.optional(),
   side: z.object({ photo, anchors, at: finite, imageAspect: finite.positive().optional(), results: z.array(z.object({ key: z.enum(["nasofrontalAngle", "nasolabialAngle", "facialConvexity", "eLineUpper", "eLineLower"]), label: text, value: finite, unit: z.enum(["deg", "ratio"]), band, score: finite.min(0).max(100), verdict, meaning: text })).max(5) }).optional(),
 });
 const profile = z.object({
-  onboarded: z.boolean(), sex, ageRange: text.optional(), goal: text.optional(),
+  onboarded: z.boolean(), sex, gender: z.enum(["male", "female"]).optional(), ageRange: text.optional(), goal: text.optional(),
   skinType: z.enum(["oily", "dry", "normal", "combination", "sensitive"]).optional(),
   skincare: z.array(text).max(30).optional(), diet: z.enum(["balanced", "high-protein", "plant-based", "not-great"]).optional(),
   sleep: z.enum(["<5", "6-8", "8+", "irregular"]).optional(), activity: z.enum(["sedentary", "light", "regular", "athlete"]).optional(),
   concerns: z.array(text).max(30).optional(), experience: z.enum(["beginner", "intermediate", "advanced"]).optional(), goals: z.array(text).max(30).optional(),
 });
-const schema = z.object({ format: z.literal("local-faceiq"), version: z.union([z.literal(1), z.literal(2), z.literal(3)]), exportedAt: z.string().datetime(), profile, scans: z.array(scan).max(40) });
+const schema = z.object({ format: z.literal("local-faceiq"), version: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4)]), exportedAt: z.string().datetime(), profile, scans: z.array(scan).max(40) });
 
 export function createBackup(): string {
   // AI credentials and AI caches are intentionally excluded. The core geometry,
   // photos, profile, corrections and side measurements are self-contained.
-  const data = { format: "local-faceiq", version: 3, exportedAt: new Date().toISOString(), profile: loadProfile(), scans: loadScans() };
+  const data = { format: "local-faceiq", version: 4, exportedAt: new Date().toISOString(), profile: loadProfile(), scans: loadScans() };
   return JSON.stringify(schema.parse(data), null, 2);
 }
 export function restoreBackup(raw: string): number {

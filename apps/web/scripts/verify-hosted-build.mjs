@@ -39,6 +39,7 @@ if (!policies.length || policies.some(policy => /localhost|127\.0\.0\.1|'unsafe-
 for (const [name, expected] of [
   ["face_landmarker.task", "64184e229b263107bc2b804c6625db1341ff2bb731874b0bcc2fe6544e0bc9ff"],
   ["selfie_multiclass.tflite", "c6748b1253a99067ef71f7e26ca71096cd449baefa8f101900ea23016507e0e0"],
+  ["pose_landmarker_lite.task", "59929e1d1ee95287735ddd833b19cf4ac46d29bc7afddbbf6753c459690d574a"],
 ]) {
   const digest = createHash("sha256").update(readFileSync(join(app, "public", "mediapipe", name))).digest("hex");
   if (digest !== expected) fail(`The packaged ${name} does not match the pinned model.`);

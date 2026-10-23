@@ -1,5 +1,13 @@
 import type { XY } from "../harmony/types";
-import { SYM_PAIRS, MIDLINE } from "../landmarks/indices";
+import { MIDLINE } from "../landmarks/indices";
+
+/** Bilateral pairs near the facial midline. Outline points (cheek, temple, jaw
+ * edge) are left out: a few degrees of head turn moves them far more than
+ * genuine asymmetry does. [subject right, subject left, weight] */
+const SYMMETRY_PAIRS: readonly (readonly [number, number, number])[] = [
+  [468, 473, 1], [133, 362, 1], [33, 263, .9], [159, 386, .6], [145, 374, .6], [105, 334, .6], [55, 285, .6],
+  [48, 278, .8], [98, 327, .6], [61, 291, 1], [37, 267, .6], [84, 314, .5], [149, 378, .4],
+];
 
 /**
  * Photo-based facial measurements used by the Features, Angularity and
@@ -174,7 +182,7 @@ export function measureImageFeatures({ mesh, pixels, segmentation }: ImageFeatur
   const ipd = Math.hypot(P(473).x - P(468).x, P(473).y - P(468).y);
   const midX = mean(MIDLINE.map(i => level(P(i)).x));
   let asym = 0, total = 0;
-  for (const [a, b, wgt] of SYM_PAIRS) {
+  for (const [a, b, wgt] of SYMMETRY_PAIRS) {
     if (!mesh[a] || !mesh[b]) continue;
     const pa = level(P(a)), pb = level(P(b));
     asym += wgt * (Math.abs((pa.x - midX) + (pb.x - midX)) + Math.abs(pa.y - pb.y)) / ipd; total += wgt;

@@ -22,8 +22,8 @@
    "sd": 0.0944351
   },
   "side.gonial-angle": {
-   "mean": 133.367,
-   "sd": 13.533
+   "mean": 133.243,
+   "sd": 12.2951
   },
   "front.jaw-slope": {
    "mean": 144.076,
@@ -38,32 +38,32 @@
    "sd": 0.14118
   },
   "side.mentolabial-angle": {
-   "mean": 136.488,
-   "sd": 12.0867
+   "mean": 136.262,
+   "sd": 13.0621
   },
   "side.recession-relative-to-frankfort-plane": {
-   "mean": -1.01298,
-   "sd": 5.02297
+   "mean": -1.15276,
+   "sd": 4.70331
   },
   "front.chin-to-philtrum-ratio": {
    "mean": 2.44197,
    "sd": 0.346764
   },
   "side.submental-cervical-angle": {
-   "mean": 126.501,
-   "sd": 14.9299
+   "mean": 126.382,
+   "sd": 16.0982
   },
   "front.lower-third": {
    "mean": 36.7457,
    "sd": 2.88123
   },
   "side.brow-bossing-angle": {
-   "mean": 8.63114,
-   "sd": 7.89948
+   "mean": 8.74604,
+   "sd": 8.55743
   },
   "side.nasofrontal-angle": {
-   "mean": 136.673,
-   "sd": 10.2623
+   "mean": 136.668,
+   "sd": 10.3298
   },
   "front.brow-thickness": {
    "mean": 16.0874,
@@ -118,12 +118,12 @@
    "sd": 0.194479
   },
   "side.nasal-projection": {
-   "mean": 0.505229,
-   "sd": 0.109275
+   "mean": 0.504269,
+   "sd": 0.114735
   },
   "img.asymmetry": {
-   "mean": 0.0427049,
-   "sd": 0.0276442
+   "mean": 0.0292173,
+   "sd": 0.0183032
   },
   "img.skinTexture": {
    "mean": 0.020428,
@@ -175,12 +175,12 @@
   },
   "angularity.jaw": {
    "male": {
-    "mean": 0.0151703,
-    "sd": 0.627108
+    "mean": 0.0564415,
+    "sd": 0.707055
    },
    "female": {
-    "mean": -0.0169218,
-    "sd": 0.441137
+    "mean": -0.0344801,
+    "sd": 0.503165
    }
   },
   "angularity.cheeks": {
@@ -195,42 +195,42 @@
   },
   "angularity.chin": {
    "male": {
-    "mean": 0.124109,
-    "sd": 0.638212
+    "mean": 0.119038,
+    "sd": 0.659461
    },
    "female": {
-    "mean": -0.1398,
-    "sd": 0.543292
+    "mean": -0.14467,
+    "sd": 0.511695
    }
   },
   "angularity.submental": {
    "male": {
-    "mean": 0.0779987,
-    "sd": 0.939757
+    "mean": 0.0872986,
+    "sd": 0.892775
    },
    "female": {
-    "mean": 0.019379,
-    "sd": 0.746945
+    "mean": -0.0434993,
+    "sd": 0.686795
    }
   },
   "dimorphism.jaw": {
    "male": {
-    "mean": 0.382382,
-    "sd": 0.421099
+    "mean": 0.374006,
+    "sd": 0.445813
    },
    "female": {
-    "mean": -0.378076,
-    "sd": 0.47979
+    "mean": -0.429642,
+    "sd": 0.442516
    }
   },
   "dimorphism.brow-ridge": {
    "male": {
-    "mean": 0.295829,
-    "sd": 0.964657
+    "mean": 0.309788,
+    "sd": 0.911228
    },
    "female": {
-    "mean": -0.481715,
-    "sd": 0.539599
+    "mean": -0.440988,
+    "sd": 0.458503
    }
   },
   "dimorphism.eyebrows": {
@@ -305,22 +305,22 @@
   },
   "dimorphism.nose": {
    "male": {
-    "mean": 0.540247,
-    "sd": 0.68287
+    "mean": 0.490237,
+    "sd": 0.611929
    },
    "female": {
-    "mean": -0.377243,
-    "sd": 0.710096
+    "mean": -0.370312,
+    "sd": 0.683286
    }
   },
   "features.symmetry": {
    "male": {
-    "mean": -1.32285e-7,
-    "sd": 1.02333
+    "mean": 0.0385833,
+    "sd": 1.0249
    },
    "female": {
-    "mean": 0.050812,
-    "sd": 0.851247
+    "mean": 0.000001812,
+    "sd": 0.791864
    }
   },
   "features.skin": {
@@ -417,32 +417,32 @@
  "pillars": {
   "angularity": {
    "male": {
-    "mean": 4.95205,
-    "sd": 0.85696
+    "mean": 4.94256,
+    "sd": 0.848484
    },
    "female": {
-    "mean": 4.90661,
-    "sd": 0.91366
+    "mean": 4.91962,
+    "sd": 0.933419
    }
   },
   "dimorphism": {
    "male": {
-    "mean": 4.94606,
-    "sd": 0.515321
+    "mean": 4.94129,
+    "sd": 0.51524
    },
    "female": {
-    "mean": 4.80893,
-    "sd": 0.575588
+    "mean": 4.77081,
+    "sd": 0.613018
    }
   },
   "features": {
    "male": {
-    "mean": 4.63697,
-    "sd": 0.754574
+    "mean": 4.65332,
+    "sd": 0.737081
    },
    "female": {
-    "mean": 4.61779,
-    "sd": 0.828958
+    "mean": 4.6772,
+    "sd": 0.812785
    }
   }
  },
@@ -459,22 +459,22 @@
   },
   "side": {
    "male": {
-    "mean": 0.192618,
-    "sd": 0.776387
+    "mean": 0.187104,
+    "sd": 0.805479
    },
    "female": {
-    "mean": -0.3062,
-    "sd": 0.909468
+    "mean": -0.26802,
+    "sd": 0.934642
    }
   },
   "combined": {
    "male": {
-    "mean": 0.180701,
-    "sd": 0.592347
+    "mean": 0.183989,
+    "sd": 0.589942
    },
    "female": {
-    "mean": -0.215884,
-    "sd": 0.668737
+    "mean": -0.192905,
+    "sd": 0.675842
    }
   }
  }

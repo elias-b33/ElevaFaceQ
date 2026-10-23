@@ -1,4 +1,4 @@
-import { analyzeHarmony, describeMeasurement, formatMeasurement, FRONT_LANDMARKS, HARMONY_CATALOG, HARMONY_VERSION, REFERENCE_NOTE, seedDocument, mergeAutomaticDocument, SIDE_LANDMARKS, type HarmonyReport, type HarmonySettings, type MeasurementDocument } from "@freeharmony/engine";
+import { analyzeHarmony, AUTOMATIC_ENGINE, describeMeasurement, formatMeasurement, FRONT_LANDMARKS, HARMONY_CATALOG, HARMONY_VERSION, REFERENCE_NOTE, seedDocument, mergeAutomaticDocument, SIDE_LANDMARKS, type HarmonyReport, type HarmonySettings, type MeasurementDocument } from "@freeharmony/engine";
 import type { StoredScan } from "./store";
 import { MAPPING_ENGINE, observedFrontDocument } from './observed-mapping';
 
@@ -6,7 +6,9 @@ import { MAPPING_ENGINE, observedFrontDocument } from './observed-mapping';
 export function scanDocuments(scan: StoredScan): HarmonySettings {
   const frontAspect = scan.imageAspect ?? (scan.result.frame ? scan.result.frame.imageWidth / scan.result.frame.imageHeight : 1);
   let front=scan.measurements?.front;
-  if (!front || scan.input?.landmarks && front.automatic?.engine!==MAPPING_ENGINE) {
+  // Studies from the earlier mesh-only mapping are re-derived from their stored mesh;
+  // current automatic drafts and every manual correction are kept as saved.
+  if (!front || scan.input?.landmarks && front.automatic?.engine!==MAPPING_ENGINE && front.automatic?.engine!==AUTOMATIC_ENGINE) {
     const height=scan.input?.imageHeight ?? scan.result.frame?.imageHeight ?? front?.imageHeight ?? 768/Math.max(1,frontAspect);
     const observed=observedFrontDocument({mesh:scan.input?.landmarks,width:height*frontAspect,height});
     // Existing explicit corrections survive; unreviewed anatomical guesses do not.

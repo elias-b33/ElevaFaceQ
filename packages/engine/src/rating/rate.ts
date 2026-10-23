@@ -47,6 +47,8 @@ export interface RateInput {
   image?: ImageFeatures | null;
 }
 
+/** Dimorphism readings describe masculinity; for a feminine target a high score reads as feminine. */
+const reads = (def: AssessmentDef, score: number, gender: RatingGender) => (score >= 5) !== (!!def.dimorphic && gender === "female") ? def.high : def.low;
 const summary = (score: number | null): ScoreSummary | null => score === null || !Number.isFinite(score) ? null : { score, label: scoreLabel(score), percentile: percentileOfScore(score), rarity: rarityOfScore(score) };
 const MIN_ITEMS = { front: 15, side: 12 };
 
@@ -119,12 +121,12 @@ export function rateFace(input: RateInput, cal: Calibration = CALIBRATION): Rati
     for (const m of measurementItems) {
       if (m.weight <= 0) continue;
       const ideal = overallOf({ ...pillarScores, harmony: harmonyWith(m.key, 10) })!, typical = overallOf({ ...pillarScores, harmony: harmonyWith(m.key, 6) })!;
-      impacts.push({ key: m.key, label: m.label, pillar: "harmony", kind: "measurement", score: m.score, impact: 0, gain: ideal - overall, loss: overall - typical, reading: m.reading, value: m.value, unit: m.unit, ideal: m.ideal });
+      impacts.push({ key: m.key, label: m.label, pillar: "harmony", kind: "measurement", score: m.score, impact: 0, gain: ideal - overall, loss: overall - typical, reading: m.position === "within" ? m.reading : m.score >= 7 ? "Close to the ideal range" : m.reading, value: m.value, unit: m.unit, ideal: m.ideal });
     }
     for (const { def, score } of assessed.values()) {
       const ideal = overallOf({ ...pillarScores, [def.pillar]: scoredPillar(def.pillar, { key: def.key, score: 10 }) })!;
       const typical = overallOf({ ...pillarScores, [def.pillar]: scoredPillar(def.pillar, { key: def.key, score: 5 }) })!;
-      impacts.push({ key: def.key, label: def.label, pillar: def.pillar, kind: "assessment", score, impact: 0, gain: ideal - overall, loss: overall - typical, reading: score >= 5 ? def.high : def.low });
+      impacts.push({ key: def.key, label: def.label, pillar: def.pillar, kind: "assessment", score, impact: 0, gain: ideal - overall, loss: overall - typical, reading: reads(def, score, gender) });
     }
   }
   const flaws = impacts.filter(i => i.score < 7 && i.gain >= .02).sort((a, b) => b.gain - a.gain).slice(0, 12).map(({ gain, loss: _l, ...i }) => ({ ...i, impact: -gain }));
@@ -144,7 +146,7 @@ export function rateFace(input: RateInput, cal: Calibration = CALIBRATION): Rati
   const pillar = (key: PillarKey): PillarResult => {
     const items: AssessmentScore[] = key === "harmony" ? [] : ASSESSMENTS.filter(d => d.pillar === key && assessed.has(d.key)).map(d => {
       const score = assessed.get(d.key)!.score;
-      return { key: d.key, label: d.label, pillar: key, score, weight: d.weight, reading: score >= 5 ? d.high : d.low, grade: itemLabel(score) };
+      return { key: d.key, label: d.label, pillar: key, score, weight: d.weight, reading: reads(d, score, gender), grade: itemLabel(score) };
     });
     return { key, ...PILLAR_LABELS[key], summary: summary(pillarScores[key]), items, coverage: key === "harmony" ? (front.length ? VIEW_SHARE.front : 0) + (side.length ? VIEW_SHARE.side : 0) : coverageOf(key) };
   };

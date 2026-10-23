@@ -7,6 +7,8 @@ import type {
   Sex,
   HarmonySettings,
   ScanDiagnostic,
+  ImageFeatures,
+  RatingGender,
 } from "@freeharmony/engine";
 import type { StoredInput } from "./scan";
 
@@ -16,6 +18,8 @@ import type { StoredInput } from "./scan";
 export interface Profile {
   onboarded: boolean;
   sex: Sex;
+  /** Gender whose ideal ranges the rating uses; asked when a rating starts. */
+  gender?: RatingGender;
   ageRange?: string;
   goal?: string;
   skinType?: "oily" | "dry" | "normal" | "combination" | "sensitive";
@@ -61,6 +65,10 @@ export interface StoredScan {
   overrides?: Record<number, { x: number; y: number }>;
   /** Versioned, named 70+ measurement landmarks; legacy geometry is preserved. */
   measurements?: HarmonySettings;
+  /** Ideal ranges and calibration the rating is scored against. */
+  gender?: RatingGender;
+  /** Photo-based measurements from the original front photo (skin, eyes, hair, symmetry). */
+  imageFeatures?: ImageFeatures;
   /** Optional AI annotations — never part of the score itself. */
   ai?: {
     sanity?: import("./ai/schema").SanityAnnotation;

@@ -61,13 +61,14 @@ describe("local scan persistence and backups", () => {
     expect(() => restoreBackup(backup)).toThrow("storage is full");
     expect(entries.get(SCANS_KEY)).toBe(before);
   });
-  it("round-trips all named landmarks, calibration, review state and custom ranges in v3", () => {
+  it("round-trips all named landmarks, calibration, review state, custom ranges and rating inputs in v4", () => {
     const front = seedDocument("front", .8, canonicalInput().landmarks);
     front.points.hairline = { x: .5, y: .15, source: "manual", reviewed: true };
     front.calibration = { from: "hairline", to: "menton", millimeters: 185 };
-    const original: StoredScan = { ...exampleScan(), measurements: { version: 1, front, side: seedDocument("side", 1.2), ranges: { "front.midface-ratio": { lo: .9, hi: 1.15 }, "side.nasofrontal-angle": null }, notes: "Same lens and distance.", descriptiveOnly: false } };
+    const imageFeatures = { version: 1 as const, asymmetry: .04, skinTexture: .025, skinBlotch: 2.1, underEye: 1.03, scleraBrightness: 1.1, scleraRedness: .09, creasing: .03, browContrast: .5, lipContrast: 2.4, facialHair: .07, hairLength: .02, templeRecession: -.15, jawShadow: .34, submalarShadow: 0, lowerFaceWidth: .94, noseAsymmetry: null };
+    const original: StoredScan = { ...exampleScan(), gender: "female", imageFeatures, measurements: { version: 1, front, side: seedDocument("side", 1.2), ranges: { "front.midface-ratio": { lo: .9, hi: 1.15 }, "side.nasofrontal-angle": null }, notes: "Same lens and distance.", descriptiveOnly: false } };
     saveScan(original); const backup = createBackup();
-    expect(JSON.parse(backup).version).toBe(3);
+    expect(JSON.parse(backup).version).toBe(4);
     entries.delete(SCANS_KEY); restoreBackup(backup);
     expect(loadScans()[0]).toEqual(JSON.parse(JSON.stringify(original)));
   });

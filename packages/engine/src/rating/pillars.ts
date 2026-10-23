@@ -34,7 +34,7 @@ export const ASSESSMENTS: readonly AssessmentDef[] = [
   A("dimorphism", "brow-ridge", "Brow ridge", "Prominent brow ridge", "Smooth brow", [T("side.brow-bossing-angle", 1), T("side.nasofrontal-angle", -1)], 1, true),
   A("dimorphism", "eyebrows", "Eyebrow thickness", "Thick, low, straight brows", "Fine, high, arched brows", [T("front.brow-thickness", 1), T("img.browContrast", 1), T("front.eyebrow-tilt", -1, .5), T("front.eyebrow-low-setedness", -1, .5)], 1, true),
   // Canthal tilt and cheekbone height are attractive in both sexes, so they are not counted as feminine.
-  A("dimorphism", "eyes", "Eyes", "Narrower, deeper-set eyes", "Larger, more open eyes", [T("front.eye-aspect-ratio", 1), T("front.eyebrow-low-setedness", -1, .5)], 0.75, true),
+  A("dimorphism", "eyes", "Eyes", "Narrower, deeper-set eyes", "Larger, more open eyes", [T("front.eye-aspect-ratio", 1), T("front.eyebrow-low-setedness", -1, .5)], 0.5, true),
   A("dimorphism", "face-shape", "Face shape", "Broad, robust face", "Tapered, delicate face", [T("front.face-width-to-height-ratio", 1), T("front.total-facial-width-to-height-ratio", -1, .5)], 1.25, true),
   A("dimorphism", "facial-hair", "Facial hair", "Visible beard or stubble", "Clear lower face", [T("img.facialHair", 1)], 0.75, true),
   A("dimorphism", "hair-length", "Hair length", "Short hair", "Long hair", [T("img.hairLength", -1)], 0.5, true),

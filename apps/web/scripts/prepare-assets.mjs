@@ -57,3 +57,17 @@ const contour = existsSync(contourDst) ? readFileSync(contourDst) : Buffer.from(
 if (createHash("sha256").update(contour).digest("hex") !== contourHash) throw new Error("Contour model integrity check failed.");
 if (!existsSync(contourDst)) writeFileSync(contourDst, contour);
 console.log("[assets] contour model verified");
+
+// Pinned official Apache-2.0 body-pose model (lite). It supplies eye, ear and
+// mouth priors for side profiles, where the face mesh cannot lock on.
+const poseDst = join(app, "public", "mediapipe", "pose_landmarker_lite.task");
+const poseHash = "59929e1d1ee95287735ddd833b19cf4ac46d29bc7afddbbf6753c459690d574a";
+const poseUrl = "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task";
+const pose = existsSync(poseDst) ? readFileSync(poseDst) : Buffer.from(await (async () => {
+  const response = await fetch(poseUrl);
+  if (!response.ok) throw new Error(`Pose model download failed: ${response.status}`);
+  return response.arrayBuffer();
+})());
+if (createHash("sha256").update(pose).digest("hex") !== poseHash) throw new Error("Pose model integrity check failed.");
+if (!existsSync(poseDst)) writeFileSync(poseDst, pose);
+console.log("[assets] pose model verified");
