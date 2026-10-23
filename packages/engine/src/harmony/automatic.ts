@@ -154,13 +154,25 @@ export function automaticLandmarks(input: AutomaticInput): MeasurementDocument {
         const ear = candidates[0];
         if (ear && Math.abs(ear.x - pt(cheek).x) * aspect > h * .025) put(`ear${suffix}`, ear.x, ear.y, "contour", .48, "Outermost skin boundary near ear level; hair and head rotation can obscure it");
       }
-      const neckY = pt(152).y + h * .14;
-      if (neckY < .98) {
-        const row = Math.round(neckY * (seg.height - 1));
-        const xs: number[] = [];
-        for (let x = Math.max(0, Math.round((center - h / aspect * .35) * seg.width)); x < Math.min(seg.width, (center + h / aspect * .35) * seg.width); x++) if (seg.categories[row * seg.width + x] === 2) xs.push(x / (seg.width - 1));
-        if (xs.length > seg.width * .04) { put("neckL", Math.min(...xs), neckY, "contour", .58, "Body-skin segmentation boundary just below the chin"); put("neckR", Math.max(...xs), neckY, "contour", .58, "Body-skin segmentation boundary at the same neck level"); }
+      // Neck width at its narrowest point below the jaw: the contiguous body-skin
+      // run through the midline, so shoulders and an open collar are excluded.
+      let neck: { y: number; l: number; r: number } | undefined;
+      const mid = Math.round(((pt(152).x + pt(10).x) / 2) * (seg.width - 1));
+      for (let y = pt(152).y + h * .05; y < Math.min(.985, pt(152).y + h * .3); y += 1 / seg.height) {
+        const row = Math.round(y * (seg.height - 1)) * seg.width;
+        if (seg.categories[row + mid] !== 2) continue;
+        let l = mid, r = mid;
+        while (l > 0 && seg.categories[row + l - 1] === 2) l--;
+        while (r < seg.width - 1 && seg.categories[row + r + 1] === 2) r++;
+        // Both edges must meet background or hair; clothing marks a collar, not the neck outline.
+        const outside = (x: number) => x < 0 || x >= seg.width || seg.categories[row + x] === 0 || seg.categories[row + x] === 1;
+        if (!outside(l - 1) || !outside(r + 1)) continue;
+        if (!neck || r - l < neck.r - neck.l) neck = { y, l, r };
       }
+      if (neck && (neck.r - neck.l) / (seg.width - 1) * aspect > h * .25) {
+        put("neckL", neck.l / (seg.width - 1), neck.y, "contour", .62, "Narrowest neck width below the jaw, from the body-skin boundary");
+        put("neckR", neck.r / (seg.width - 1), neck.y, "contour", .62, "Narrowest neck width below the jaw, at the same level");
+      } else warnings.push("The neck is not visible below the jaw. Include the neck to measure neck width.");
     } else warnings.push("Contour segmentation was unavailable. Mesh points are suggested; hairline, ear and neck points may need a quick review.");
     warnings.push("Hood, bridge and faint crease positions are estimates. Inspect these small features before relying on their ratios.");
     return finish(doc, warnings, true, input.at ?? 0);
