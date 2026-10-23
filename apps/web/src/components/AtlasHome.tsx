@@ -1,88 +1,177 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { analyzeHarmony, FRONT_MEASUREMENT_COUNT, SIDE_MEASUREMENT_COUNT } from "@freeharmony/engine";
 import { loadScans, type StoredScan } from "@/lib/store";
-import { scanDocuments } from "@/lib/harmony";
 import { formatScore, rateScan } from "@/lib/rating";
 
-const PORTRAITS = [
-  { src: "/images/campaign-enface.webp", alt: "Original editorial portrait, facing the camera in warm sculptural light", label: "EN FACE", number: "01" },
-  { src: "/images/campaign-profile.webp", alt: "Original editorial portrait in profile against a warm stone backdrop", label: "IN PROFILE", number: "02" },
+const PORTRAITS = {
+  front: { src: "/images/campaign-enface.webp", alt: "Editorial portrait facing the camera, used as an illustrative example" },
+  side: { src: "/images/campaign-profile.webp", alt: "Editorial portrait in profile, used as an illustrative example" },
+} as const;
+
+// Illustrative sample figures for the product preview; they describe no real person.
+const SAMPLE_PILLARS = [
+  { label: "Harmony", score: 7.7 },
+  { label: "Angularity", score: 7.2 },
+  { label: "Dimorphism", score: 8.0 },
+  { label: "Features", score: 6.9 },
+] as const;
+const SAMPLE_STRENGTHS = [
+  { label: "Lateral canthal tilt", detail: "6.2° · ideal 4.0–8.5°", impact: "+0.21" },
+  { label: "Jaw definition", detail: "Sharp, defined jawline", impact: "+0.18" },
+  { label: "Facial thirds", detail: "Within the ideal range", impact: "+0.12" },
+] as const;
+const SAMPLE_FLAWS = [
+  { label: "Under-eye area", detail: "Mild under-eye shadowing", impact: "−0.24" },
+  { label: "Chin projection", detail: "Slightly recessed chin", impact: "−0.19" },
+  { label: "Skin quality", detail: "Some visible texture", impact: "−0.15" },
 ] as const;
 
-function Arrow({ diagonal = false }: { diagonal?: boolean }) {
-  return <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d={diagonal ? "M5 19 19 5M5 5h14v14" : "M4 12h15m-6-6 6 6-6 6"} stroke="currentColor" strokeWidth="1.2"/></svg>;
-}
+const STEPS = [
+  { title: "Choose your reference", text: "Pick whether you are rated against male or female ideals. You can switch it on your report at any time." },
+  { title: "Add a front photo", text: "Face the camera in even light. 478 landmarks are mapped in about two seconds, right in your browser." },
+  { title: "Add your side profile", text: "Turn 90° with your ear and jaw visible. The silhouette is traced to measure your nose, lips, chin and jaw." },
+] as const;
 
-function Count({ value }: { value: number }) {
-  const ref = useRef<HTMLSpanElement>(null);
-  useEffect(() => {
-    const element = ref.current;
-    if (!element || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    let frame = 0;
-    const observer = new IntersectionObserver(entries => {
-      if (!entries.some(entry => entry.isIntersecting)) return;
-      observer.disconnect();
-      const start = performance.now();
-      const tick = (now: number) => {
-        const t = Math.min(1, (now - start) / 1200);
-        element.textContent = String(Math.round(value * (1 - (1 - t) ** 4))).padStart(2, "0");
-        if (t < 1) frame = requestAnimationFrame(tick);
-      };
-      frame = requestAnimationFrame(tick);
-    }, { threshold: .7 });
-    observer.observe(element);
-    return () => { observer.disconnect(); cancelAnimationFrame(frame); };
-  }, [value]);
-  return <span ref={ref} aria-hidden="true">{value}</span>;
-}
+const PILLARS = [
+  { n: "01", title: "Harmony", text: "66 proportions across your front and profile, each compared with the ideal range for your gender: facial thirds, eye spacing, canthal tilt, nose and lip angles, chin projection and more." },
+  { n: "02", title: "Angularity", text: "How defined your bone structure reads: cheekbone prominence, jawline, cheek leanness, chin and the angle between chin and neck." },
+  { n: "03", title: "Dimorphism", text: "How masculine or feminine your jaw, brow, eyes, face shape, nose, lips and hair read, scored against the gender you choose." },
+  { n: "04", title: "Features", text: "The quality of what sits on the structure: symmetry, skin, under-eyes, sclera, brows, eyelids and lips, measured from your photo." },
+] as const;
 
-function StudyLines({ side }: { side: boolean }) {
-  const points = side
-    ? [[255,249],[240,334],[243,393],[125,499],[189,549],[149,597],[169,625],[152,659],[198,760],[552,789],[714,471]]
-    : [[361,267],[500,231],[638,267],[310,416],[407,415],[591,415],[689,416],[500,449],[445,552],[554,552],[420,639],[500,654],[578,639],[500,821],[322,695],[678,695]];
-  return <svg viewBox="0 0 1000 1250" className="study-geometry" fill="none" aria-hidden="true">
-    <g className="study-construction" stroke="currentColor" strokeWidth="1"><path d="M130 415H870M130 638H870M500 120v820" strokeDasharray="4 9"/><path d="M158 232v589m-10-589h20m-20 589h20M310 883h379m-379-10v20m379-20v20"/></g>
-    <g className="study-contours" stroke="currentColor" strokeWidth="1.5">
-      {side ? <><path d="M255 249Q231 294 240 334L243 393 125 499 189 549 149 597 169 625 152 659Q157 713 198 760Q370 780 552 789L714 471"/><path d="M243 393 714 471 198 760M125 499 714 471M189 549 552 789"/></> : <><path d="M361 267Q500 185 638 267L689 416 678 695Q619 791 500 821Q381 791 322 695L310 416Z"/><path d="M310 416 500 449 689 416M407 415 445 552 500 654 554 552 591 415M322 695 420 639 578 639 678 695M445 552 554 552M420 639 500 821 578 639"/></>}
-    </g>
-    {points.map(([x,y], i) => <g key={i} className="study-point" style={{ animationDelay: `${i * 65}ms` }}><circle cx={x} cy={y} r="4.5" fill="currentColor"/><circle cx={x} cy={y} r="11" stroke="currentColor" strokeWidth=".6" opacity=".45"/></g>)}
-  </svg>;
+const FAQ = [
+  { q: "How accurate is the rating?", a: "On a public research set of 102 rated faces, the overall score ranks people in broadly the same order as human judges (a correlation of about 0.5 within each sex), and left and right profiles of the same person agree closely. It is a structured, repeatable guide, not a verdict. Lighting, lens distance and head angle change the result, so compare photos taken the same way." },
+  { q: "Are my photos uploaded anywhere?", a: "No. Face detection, landmarks, measurements and the rating all run in your browser. Your photos and ratings are saved only in this browser, and you can export or delete them at any time. There is no account." },
+  { q: "What photos work best?", a: "A sharp front photo at eye level from about an arm's length or more, neutral expression, even light and hair off the forehead. For the profile, turn a full 90° with your ear, jaw and neck visible against a plain background." },
+  { q: "What does a score of 7 mean?", a: "Scores are percentile-based with 5 as average. A 6 is roughly the top 29%, a 7 about 1 in 18 people and an 8 about 1 in 250. The scale is symmetric, so a 3 is as uncommon as a 7." },
+  { q: "Can I correct the landmarks?", a: "Yes. Every point can be moved on the landmarks page and your rating updates live as you adjust. Estimated points count for less until you review them." },
+  { q: "Is it free?", a: "Yes. No subscription, no paywall and no sign-up." },
+] as const;
+
+function Arrow() {
+  return <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 12h15m-6-6 6 6-6 6" stroke="currentColor" strokeWidth="1.6"/></svg>;
+}
+function Check() {
+  return <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="m5 10.5 3.2 3L15 6.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>;
+}
+const width = (score: number) => ({ width: `${score * 10}%` });
+
+function SampleCard() {
+  return <div className="hv-result" aria-label="Sample rating card">
+    <div className="hv-result-head"><span>Sample result</span><span className="hv-live"><i/> Rated on device</span></div>
+    <div className="hv-result-score"><strong>7.4</strong><span>/ 10</span></div>
+    <p className="hv-result-label">Great · Top 2%</p>
+    <ul>{SAMPLE_PILLARS.map(p => <li key={p.label}><span>{p.label}</span><b><i style={width(p.score)}/></b><em>{p.score.toFixed(1)}</em></li>)}</ul>
+  </div>;
 }
 
 export function AtlasHome() {
   const [scans, setScans] = useState<StoredScan[]>([]);
-  const [portrait, setPortrait] = useState(0);
-  const [paused, setPaused] = useState(false);
-  const [perspective, setPerspective] = useState<"front" | "side">("front");
-  const [geometry, setGeometry] = useState(true);
+  const [view, setView] = useState<"front" | "side">("front");
   useEffect(() => setScans(loadScans()), []);
-  const last = scans[0], settings = last ? scanDocuments(last) : undefined;
-  const front = analyzeHarmony("front", settings?.front, settings), side = analyzeHarmony("side", settings?.side, settings);
-  const lastScore = last ? rateScan(last, settings).overall?.score ?? null : null;
+  const last = scans[0];
+  const lastScore = last ? rateScan(last).overall?.score ?? null : null;
 
-  return <main className="campaign-home">
-    <section className="campaign-hero" data-motion-paused={paused} aria-label="The ElevaFace private edition">
-      <div className="campaign-images" aria-hidden="true">{PORTRAITS.map((image, i) => <div className={`campaign-image ${portrait === i ? "is-active" : ""}`} key={image.src}><img src={image.src} alt="" width="1536" height="1024" fetchPriority={i === 0 ? "high" : "auto"}/></div>)}</div>
-      <div className="campaign-wash"/>
-      <div className="campaign-topline"><span>THE PRIVATE ATLAS</span><span>A STUDY IN INDIVIDUALITY</span></div>
-      <div className="campaign-copy"><p className="campaign-kicker"><span/> YOUR FACE, RATED. PRIVATELY.</p><h1><span>Elevate</span><em>your face.</em></h1><p className="campaign-description">A rating out of 10 from a front photo and a side profile.<br/>Harmony, angularity, dimorphism and features, measured on your device.</p><Link href="/scan" className="campaign-cta"><span>Rate my face</span><i><Arrow diagonal/></i></Link><p className="campaign-assurance">RATED OUT OF 10 <b>·</b> 71 MEASUREMENTS <b>·</b> ENTIRELY PRIVATE</p></div>
-      <div className="campaign-bottomline"><a href="#perspectives" className="campaign-scroll"><span className="scroll-track"/><span>SCROLL TO DISCOVER</span></a><div className="campaign-slider" role="group" aria-label="Campaign portrait">{PORTRAITS.map((image,i) => <button key={image.label} onClick={() => setPortrait(i)} aria-pressed={portrait === i} aria-label={`View ${image.label.toLowerCase()} portrait`}><span>{image.number}</span><i/><span className="slide-name">{image.label}</span></button>)}</div><button className="campaign-pause" onClick={() => setPaused(!paused)} aria-label={paused ? "Play portrait motion" : "Pause portrait motion"} aria-pressed={paused}>{paused ? <svg viewBox="0 0 16 16" aria-hidden="true"><path d="m5 3 8 5-8 5Z" fill="currentColor"/></svg> : <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M5 3v10M11 3v10" stroke="currentColor" strokeWidth="1.5"/></svg>}<span>{paused ? "PLAY" : "PAUSE"}</span></button></div><span className="campaign-caption" aria-live="polite">{PORTRAITS[portrait].number} / {PORTRAITS[portrait].label} — THE PORTRAIT SERIES</span>
+  return <main className="home-v2">
+    <section className="hv-hero" aria-labelledby="hero-title">
+      <div className="hv-hero-inner">
+        <div className="hv-hero-copy">
+          <p className="hv-pill"><span/>Free · Private · No sign-up</p>
+          <h1 id="hero-title">Know your face.<br/><em>Elevate it.</em></h1>
+          <p className="hv-lede">A precise rating out of 10 from a front photo and a side profile: 66 proportions, four pillars, your percentile and a clear list of what lifts and what holds back your score.</p>
+          <div className="hv-actions">
+            <Link href="/scan" className="hv-button">Rate my face <Arrow/></Link>
+            <a href="#sample" className="hv-button is-ghost">See a sample report</a>
+          </div>
+          <ul className="hv-trust">
+            <li><Check/>Photos never leave your device</li>
+            <li><Check/>Results in under a minute</li>
+            <li><Check/>Every point adjustable</li>
+          </ul>
+          {last && <Link href={`/results/${last.id}`} className="hv-resume"><img src={last.photo} alt=""/><span><small>Your latest rating</small><b>{lastScore !== null ? `${formatScore(lastScore)} / 10` : "Open report"}</b></span><Arrow/></Link>}
+        </div>
+        <div className="hv-hero-visual">
+          <div className="hv-portrait">
+            <img src={PORTRAITS.front.src} alt={PORTRAITS.front.alt} width="1536" height="1024" fetchPriority="high"/>
+            <span className="hv-scanline" aria-hidden="true"/>
+          </div>
+          <SampleCard/>
+          <div className="hv-chip is-top"><b>Canthal tilt</b><span>+6.2° · Ideal</span></div>
+          <div className="hv-chip is-bottom"><b>Facial thirds</b><span>33 · 33 · 34%</span></div>
+        </div>
+      </div>
     </section>
 
-    <section className="editorial-intro" id="perspectives"><div className="section-running-head" data-reveal><span>01 / THE RATING</span><span>FOUR PILLARS, ONE SCORE</span></div><div className="intro-composition"><p className="intro-margin" data-reveal>THERE IS ONLY<br/>ONE OF YOU.</p><h2 data-reveal>Some things deserve<br/>a <em>closer look.</em></h2><div className="intro-note" data-reveal><p>Harmony across 66 proportions, the definition of your jaw and cheekbones, how masculine or feminine each region reads, and the quality of your skin and eyes. 5 is average; a 7 is about 1 in 18.</p><p>Every score shows the measurements, ideal ranges and landmarks behind it. Adjust any point and watch your rating update.</p><Link className="editorial-link" href="/measurements">Explore the face atlas <Arrow/></Link></div></div></section>
-
-    <section className="perspective-editorial" aria-labelledby="perspective-heading">
-      <div className="perspective-visual" data-reveal data-geometry={geometry}><div className="study-image-stack">{PORTRAITS.map((image, i) => <img key={image.src} src={image.src} alt={image.alt} width="1536" height="1024" loading="lazy" className={(perspective === "front" ? i === 0 : i === 1) ? "is-active" : ""}/>)}</div><div className="study-photo-label"><span>EF. / {perspective === "front" ? "EN FACE" : "PROFIL"}</span><span>THE PORTRAIT SERIES</span></div><div className="study-lines-wrap" key={perspective}><StudyLines side={perspective === "side"}/></div><div className="study-photo-bottom"><span>ILLUSTRATIVE GEOMETRY</span><button onClick={() => setGeometry(!geometry)} aria-pressed={geometry}>{geometry ? "Hide" : "Show"} geometry <span>{geometry ? "−" : "+"}</span></button></div></div>
-      <div className="perspective-copy" data-reveal><p className="section-label">02 / THE TWO PERSPECTIVES</p><h2 id="perspective-heading">The detail.<br/>The <em>whole you.</em></h2><p className="perspective-deck">A face is more than its first impression.</p><div className="perspective-selector" role="group" aria-label="Study perspective"><button aria-pressed={perspective === "front"} onClick={() => setPerspective("front")}>01 <span>En face</span></button><button aria-pressed={perspective === "side"} onClick={() => setPerspective("side")}>02 <span>In profile</span></button></div><div className="perspective-details" key={perspective}><div className="perspective-count"><strong aria-label={`${perspective === "front" ? FRONT_MEASUREMENT_COUNT : SIDE_MEASUREMENT_COUNT} measurements`}><Count value={perspective === "front" ? FRONT_MEASUREMENT_COUNT : SIDE_MEASUREMENT_COUNT}/></strong><span>MEASUREMENTS<br/>{perspective === "front" ? "PROPORTION & BALANCE" : "CONTOUR & CHARACTER"}</span></div><p>{perspective === "front" ? "Facial thirds, eye spacing, symmetry, cheekbones and jaw. An open view of the relationships behind your features." : "Forehead, nose, lips, chin and the jawline. A second perspective on the contours that make your profile your own."}</p><div className="perspective-tags">{(perspective === "front" ? ["Facial balance", "Eye area", "Jaw & cheekbones"] : ["Profile angles", "Nose & lips", "Chin & jawline"]).map(label => <span key={label}>{label}</span>)}</div></div><Link href="/scan" className="editorial-link">Rate both perspectives <Arrow/></Link><p className="illustration-note">Original campaign imagery. The preview is illustrative; your report uses your own photograph.</p></div>
+    <section className="hv-stats" aria-label="At a glance">
+      {[["71", "measurements"], ["478", "landmarks per photo"], ["4", "scoring pillars"], ["0", "photos uploaded"]].map(([n, l]) => <div key={l} data-reveal><strong>{n}</strong><span>{l}</span></div>)}
     </section>
 
-    <section className="private-chapter"><div className="private-chapter-grain" aria-hidden="true"/><div className="section-running-head" data-reveal><span>03 / THE PRIVATE EDITION</span><span>FOR YOUR EYES ONLY</span></div><div className="private-chapter-body"><div data-reveal><h2>Personal.<br/><em>In every sense.</em></h2><p>Your photograph is the beginning of a personal study.{" "}<br/>It stays exactly where it belongs. With you.</p><Link href="/about" className="editorial-link">Our approach to privacy <Arrow/></Link></div><div className="privacy-manifesto" data-reveal><div><span>01</span><h3>On your device.</h3><p>Landmark detection and measurements happen in your browser.</p></div><div><span>02</span><h3>On your terms.</h3><p>Review every point. Keep your reports. Export your own collection.</p></div><div><span>03</span><h3>Simply yours.</h3><p>No account. No subscription. No photograph uploads.</p></div></div></div><span className="private-watermark" aria-hidden="true">e.</span></section>
+    <section className="hv-section" aria-labelledby="how-title">
+      <header className="hv-head" data-reveal><p className="hv-eyebrow">How it works</p><h2 id="how-title">Three steps. <em>One minute.</em></h2></header>
+      <ol className="hv-steps">{STEPS.map((s, i) => <li key={s.title} data-reveal><span className="hv-step-n">{i + 1}</span><h3>{s.title}</h3><p>{s.text}</p></li>)}</ol>
+    </section>
 
-    <section className="collection-editorial"><div className="section-running-head" data-reveal><span>04 / YOUR COLLECTION</span><Link href="/progress">ALL RATINGS ({String(scans.length).padStart(2,"0")}) ↗</Link></div><div className="collection-composition" data-reveal><div><p className="section-label">A STUDY WORTH KEEPING</p><h2>Your face.<br/>Your <em>point of view.</em></h2><p>A considered report. The freedom to refine it.<br/>A collection that evolves with you.</p><Link href={last ? `/results/${last.id}` : "/scan"} className="campaign-cta"><span>{last ? "Open your latest rating" : "Get your first rating"}</span><i><Arrow diagonal/></i></Link></div><Link href={last ? `/results/${last.id}` : "/scan"} className="folio-object" aria-label={last ? "Open your latest rating" : "Get your first rating"}><div className="folio-shadow"/><div className="folio-sheet folio-sheet-back"><span>02 / IN PROFILE</span><img src={last?.side?.photo ?? PORTRAITS[1].src} alt="" width="1536" height="1024" loading="lazy"/></div><div className="folio-sheet folio-sheet-front"><div className="folio-sheet-head"><span>ElevaFace.</span><span>PERSONAL<br/>EDITION</span></div><img src={last?.photo ?? PORTRAITS[0].src} alt={last ? "Your latest saved portrait" : "Illustrative portrait on a sample dossier cover"} width="1536" height="1024" loading="lazy"/><div className="folio-sheet-foot"><span>THE RATING<small>{last ? lastScore !== null ? `RATED ${formatScore(lastScore)} / 10 · ${front.available + side.available} MEASUREMENTS` : `${front.available + side.available} MEASUREMENTS AVAILABLE` : "OUT OF 10, IN DETAIL"}</small></span><b>{String(scans.length || 1).padStart(2,"0")}</b></div></div><span className="folio-object-note">{last ? "YOUR LATEST RATING" : "YOUR PRIVATE RATING AWAITS"} <Arrow diagonal/></span></Link></div></section>
+    <section className="hv-section hv-sample" id="sample" aria-labelledby="sample-title">
+      <header className="hv-head" data-reveal><p className="hv-eyebrow">Your report</p><h2 id="sample-title">Not just a number. <em>The reasons behind it.</em></h2><p>Every rating breaks down into pillars, ranks your strengths and flaws by how much they move your score, and shows the measurement, ideal range and landmarks behind each one.</p></header>
+      <div className="hv-report" data-reveal>
+        <div className="hv-report-top">
+          <div className="hv-report-overall">
+            <span className="hv-eyebrow">Overall rating</span>
+            <div className="hv-report-score"><strong>7.4</strong><span>/ 10</span></div>
+            <p>Great</p>
+            <dl><div><dt>Top 2%</dt><dd>of people</dd></div><div><dt>1 in 46</dt><dd>rarity</dd></div><div><dt>8.3</dt><dd>potential</dd></div></dl>
+          </div>
+          <div className="hv-report-pillars">{SAMPLE_PILLARS.map(p => <div key={p.label}><span>{p.label}</span><strong>{p.score.toFixed(1)}</strong><b><i style={width(p.score)}/></b></div>)}</div>
+        </div>
+        <div className="hv-report-lists">
+          <div><h3>What lifts your score</h3>{SAMPLE_STRENGTHS.map(s => <div className="hv-impact" key={s.label}><span><b>{s.label}</b><small>{s.detail}</small></span><em className="is-up">{s.impact}</em></div>)}</div>
+          <div><h3>What holds it back</h3>{SAMPLE_FLAWS.map(s => <div className="hv-impact" key={s.label}><span><b>{s.label}</b><small>{s.detail}</small></span><em className="is-down">{s.impact}</em></div>)}</div>
+        </div>
+        <p className="hv-report-note">Illustrative sample. Your report is built from your own photos.</p>
+      </div>
+    </section>
 
-    <section className="appointment-editorial" data-reveal><span className="section-label">A MOMENT FOR YOURSELF</span><h2>Meet your <em>signature.</em></h2><Link href="/scan" className="appointment-link">Rate my face <Arrow diagonal/></Link><p>A front photo and a side profile. Entirely free and private.</p></section>
+    <section className="hv-section" aria-labelledby="pillars-title">
+      <header className="hv-head" data-reveal><p className="hv-eyebrow">What we measure</p><h2 id="pillars-title">Four pillars. <em>One score.</em></h2><p>Your overall rating combines four pillars and weighs your weakest one most, the same way a face is read as a whole.</p></header>
+      <div className="hv-pillars">{PILLARS.map(p => <article key={p.title} data-reveal><span>{p.n}</span><h3>{p.title}</h3><p>{p.text}</p></article>)}</div>
+    </section>
+
+    <section className="hv-section hv-views" aria-labelledby="views-title">
+      <div className="hv-views-visual" data-reveal>
+        <img src={PORTRAITS[view].src} alt={PORTRAITS[view].alt} width="1536" height="1024" loading="lazy" key={view}/>
+        <div className="hv-toggle" role="group" aria-label="Perspective">{(["front", "side"] as const).map(v => <button key={v} aria-pressed={view === v} onClick={() => setView(v)}>{v === "front" ? "Front" : "Profile"}</button>)}</div>
+      </div>
+      <div className="hv-views-copy" data-reveal>
+        <p className="hv-eyebrow">Two perspectives</p>
+        <h2 id="views-title">The front tells half <em>the story.</em></h2>
+        <p>{view === "front" ? "The front view measures your facial thirds, width-to-height ratio, eye spacing and tilt, brows, nose and mouth widths, cheekbones and jaw." : "The profile adds what a mirror never shows: facial convexity, nasal and nasolabial angles, lip position, chin projection, jaw angle and the line from chin to neck."}</p>
+        <ul className="hv-list">{(view === "front" ? ["36 front measurements", "Symmetry, skin and eye-area analysis", "Hairline, ears and neck placed automatically"] : ["35 profile measurements", "Silhouette traced in either direction", "Jaw and chin-to-neck angles"]).map(t => <li key={t}><Check/>{t}</li>)}</ul>
+        <Link href="/scan" className="hv-button">Rate both perspectives <Arrow/></Link>
+      </div>
+    </section>
+
+    <section className="hv-privacy" aria-labelledby="privacy-title">
+      <div className="hv-privacy-inner">
+        <div data-reveal><p className="hv-eyebrow">Private by design</p><h2 id="privacy-title">Your face stays <em>yours.</em></h2><p>Most rating apps upload your photo to a server. ElevaFace runs the vision models in your browser, so your photos are never sent anywhere.</p><Link href="/about" className="hv-text-link">Our approach to privacy <Arrow/></Link></div>
+        <ul data-reveal>
+          <li><h3>On your device</h3><p>Detection, measurement and scoring run locally in your browser.</p></li>
+          <li><h3>No account</h3><p>Nothing to sign up for. Your history lives in this browser only.</p></li>
+          <li><h3>Yours to keep</h3><p>Export a backup, print a PDF or delete everything in one click.</p></li>
+        </ul>
+      </div>
+    </section>
+
+    <section className="hv-section hv-faq" aria-labelledby="faq-title">
+      <header className="hv-head" data-reveal><p className="hv-eyebrow">Questions</p><h2 id="faq-title">Good to <em>know.</em></h2></header>
+      <div className="hv-faq-list" data-reveal>{FAQ.map(f => <details key={f.q}><summary>{f.q}<span aria-hidden="true"/></summary><p>{f.a}</p></details>)}</div>
+    </section>
+
+    <section className="hv-final" data-reveal>
+      <h2>Your rating is <em>a minute away.</em></h2>
+      <p>A front photo and a side profile. Free, private and entirely on your device.</p>
+      <Link href="/scan" className="hv-button is-light">Rate my face <Arrow/></Link>
+    </section>
   </main>;
 }

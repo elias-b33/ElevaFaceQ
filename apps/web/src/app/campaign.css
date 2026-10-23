@@ -4,7 +4,7 @@ html { scroll-behavior: smooth; scroll-padding-top: 110px; }
 .maison-header { position: sticky; top: 0; z-index: 40; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; height: 96px; padding: 0 4.4%; background: #eeeae2f5; backdrop-filter: blur(18px); border-bottom: 1px solid #29271f18; transition: height .5s var(--ease-out), box-shadow .5s; }
 .maison-header-left,.maison-header-right { display: flex; align-items: center; gap: 37px; }
 .maison-header-right { justify-content: flex-end; }
-.maison-header a:not(.maison-wordmark),.maison-menu-trigger { font-size: 10px; letter-spacing: .7px; }
+.maison-header a:not(.maison-wordmark),.maison-menu-trigger { font-size: 12px; letter-spacing: .4px; }
 .maison-menu-trigger { display: flex; align-items: center; gap: 13px; padding: 14px 0; }
 .menu-bars { display: flex; flex-direction: column; width: 22px; gap: 5px; }
 .menu-bars i { display: block; width: 22px; height: 1px; background: currentColor; transition: width .4s var(--ease-out); }
