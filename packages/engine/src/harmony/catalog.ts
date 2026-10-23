@@ -122,4 +122,4 @@ export const HARMONY_CATALOG: readonly MeasurementDefinition[] = entries;
 export const HARMONY_VERSION = "local-geometry-2.1.0";
 export const FRONT_MEASUREMENT_COUNT = entries.filter(d => d.view === "front").length;
 export const SIDE_MEASUREMENT_COUNT = entries.filter(d => d.view === "side").length;
-export const REFERENCE_NOTE = "Working ranges are editable local starting points, drawn from broad proportion conventions. They are not FaceIQ's private ranges, population norms, medical targets, or validated attractiveness thresholds. No ethnicity is inferred or scored.";
+export const REFERENCE_NOTE = "Ideal ranges are the rating's gender-specific targets, drawn from public proportion conventions and adjusted on a reference set of rated faces. They are not FaceIQ's private ranges, medical targets or validated attractiveness thresholds. No ethnicity is inferred or scored.";

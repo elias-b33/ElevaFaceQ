@@ -4,10 +4,10 @@ import calibrationData from "./calibration.json";
 import { VIEW_SHARE, rawCombinedHarmony, rawHarmony, scoreView, type MeasurementScore } from "./harmony";
 import type { RatingGender } from "./ideals";
 import type { ImageFeatures } from "./image-features";
-import { ASSESSMENTS, OVERALL_P, PILLAR_LABELS, PILLAR_P, assessmentValue, type AssessmentDef, type Calibration, type PillarKey } from "./pillars";
+import { OVERALL_P, PILLAR_LABELS, PILLAR_P, assessmentValue, assessmentsFor, readingOf, type AssessmentDef, type Calibration, type PillarKey } from "./pillars";
 import { itemLabel, percentileOfScore, powerMean, rarityOfScore, scoreFromZ, scoreLabel } from "./scale";
 
-export const RATING_VERSION = "rating-1.0";
+export const RATING_VERSION = "rating-1.1";
 export const CALIBRATION = calibrationData as Calibration;
 
 export interface ScoreSummary { score: number; label: string; percentile: number; rarity: number }
@@ -47,8 +47,6 @@ export interface RateInput {
   image?: ImageFeatures | null;
 }
 
-/** Dimorphism readings describe masculinity; for a feminine target a high score reads as feminine. */
-const reads = (def: AssessmentDef, score: number, gender: RatingGender) => (score >= 5) !== (!!def.dimorphic && gender === "female") ? def.high : def.low;
 const summary = (score: number | null): ScoreSummary | null => score === null || !Number.isFinite(score) ? null : { score, label: scoreLabel(score), percentile: percentileOfScore(score), rarity: rarityOfScore(score) };
 const MIN_ITEMS = { front: 15, side: 12 };
 
@@ -72,6 +70,7 @@ function pillarScore(items: readonly { score: number; weight: number }[], key: E
 
 export function rateFace(input: RateInput, cal: Calibration = CALIBRATION): RatingResult {
   const { gender } = input;
+  const defs = assessmentsFor(gender);
   const notes: string[] = [];
   let front = scoreView("front", input.front, gender), side = scoreView("side", input.side, gender);
   if (front.length && front.length < MIN_ITEMS.front) { notes.push("Too few front measurements are available for a front harmony score. Check the front landmarks."); front = []; }
@@ -91,16 +90,16 @@ export function rateFace(input: RateInput, cal: Calibration = CALIBRATION): Rati
 
   // Assessments and their pillars.
   const assessed = new Map<string, { def: AssessmentDef; score: number }>();
-  for (const def of ASSESSMENTS) {
+  for (const def of defs) {
     const v = assessmentValue(def, inputs, cal), s = cal.assessments[def.key]?.[gender];
     if (v === null || !s || !(s.sd > 0)) continue;
     const z = (v - s.mean) / s.sd;
     assessed.set(def.key, { def, score: scoreFromZ(def.dimorphic && gender === "female" ? -z : z) });
   }
-  const pillarItems = (key: Exclude<PillarKey, "harmony">, override?: { key: string; score: number }) => ASSESSMENTS.filter(d => d.pillar === key && assessed.has(d.key)).map(d => ({ key: d.key, weight: d.weight, score: override?.key === d.key ? override.score : assessed.get(d.key)!.score }));
+  const pillarItems = (key: Exclude<PillarKey, "harmony">, override?: { key: string; score: number }) => defs.filter(d => d.pillar === key && assessed.has(d.key)).map(d => ({ key: d.key, weight: d.weight, score: override?.key === d.key ? override.score : assessed.get(d.key)!.score }));
   const coverageOf = (key: Exclude<PillarKey, "harmony">) => {
-    const defs = ASSESSMENTS.filter(d => d.pillar === key), total = defs.reduce((s, d) => s + d.weight, 0);
-    return defs.filter(d => assessed.has(d.key)).reduce((s, d) => s + d.weight, 0) / total;
+    const inPillar = defs.filter(d => d.pillar === key), total = inPillar.reduce((s, d) => s + d.weight, 0);
+    return inPillar.filter(d => assessed.has(d.key)).reduce((s, d) => s + d.weight, 0) / total;
   };
   const scoredPillar = (key: Exclude<PillarKey, "harmony">, override?: { key: string; score: number }) => coverageOf(key) >= .55 ? pillarScore(pillarItems(key, override), key, gender, cal) : null;
   const pillarScores: Record<PillarKey, number | null> = { harmony, angularity: scoredPillar("angularity"), dimorphism: scoredPillar("dimorphism"), features: scoredPillar("features") };
@@ -126,7 +125,8 @@ export function rateFace(input: RateInput, cal: Calibration = CALIBRATION): Rati
     for (const { def, score } of assessed.values()) {
       const ideal = overallOf({ ...pillarScores, [def.pillar]: scoredPillar(def.pillar, { key: def.key, score: 10 }) })!;
       const typical = overallOf({ ...pillarScores, [def.pillar]: scoredPillar(def.pillar, { key: def.key, score: 5 }) })!;
-      impacts.push({ key: def.key, label: def.label, pillar: def.pillar, kind: "assessment", score, impact: 0, gain: ideal - overall, loss: overall - typical, reading: reads(def, score, gender) });
+      // A flaw is read no better than middling, even when it already scores well.
+      impacts.push({ key: def.key, label: def.label, pillar: def.pillar, kind: "assessment", score, impact: 0, gain: ideal - overall, loss: overall - typical, reading: readingOf(def, score < 7 ? Math.min(score, 5.9) : score, gender) });
     }
   }
   const flaws = impacts.filter(i => i.score < 7 && i.gain >= .02).sort((a, b) => b.gain - a.gain).slice(0, 12).map(({ gain, loss: _l, ...i }) => ({ ...i, impact: -gain }));
@@ -144,9 +144,9 @@ export function rateFace(input: RateInput, cal: Calibration = CALIBRATION): Rati
   }
 
   const pillar = (key: PillarKey): PillarResult => {
-    const items: AssessmentScore[] = key === "harmony" ? [] : ASSESSMENTS.filter(d => d.pillar === key && assessed.has(d.key)).map(d => {
+    const items: AssessmentScore[] = key === "harmony" ? [] : defs.filter(d => d.pillar === key && assessed.has(d.key)).map(d => {
       const score = assessed.get(d.key)!.score;
-      return { key: d.key, label: d.label, pillar: key, score, weight: d.weight, reading: reads(d, score, gender), grade: itemLabel(score) };
+      return { key: d.key, label: d.label, pillar: key, score, weight: d.weight, reading: readingOf(d, score, gender), grade: itemLabel(score) };
     });
     return { key, ...PILLAR_LABELS[key], summary: summary(pillarScores[key]), items, coverage: key === "harmony" ? (front.length ? VIEW_SHARE.front : 0) + (side.length ? VIEW_SHARE.side : 0) : coverageOf(key) };
   };

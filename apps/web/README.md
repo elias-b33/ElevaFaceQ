@@ -12,5 +12,8 @@ The tracked Vercel command verifies both deployment entrypoints, the resulting
 hosted flag, CSP and model files.
 No application secrets are required.
 
-The application is a Next.js App Router client interface. Measurement code lives
-in `packages/engine`; rule-based explanations live in `packages/advice`.
+The application is a Next.js App Router client interface. The rating flow is
+`src/components/NewAnalysis.tsx` (gender, front, profile), the report is
+`RatingReport.tsx` and landmark fine-tuning is `HarmonyWorkbench.tsx`; in-browser
+detection lives in `src/lib/automatic.ts`. Landmarks, measurements and the rating
+live in `packages/engine`; rule-based explanations live in `packages/advice`.

@@ -2,10 +2,10 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { HARMONY_CATALOG, formatMeasurement, itemLabel, type HarmonyView, type Impact, type MeasurementScore, type PillarKey, type RatingGender } from "@freeharmony/engine";
+import { HARMONY_CATALOG, itemLabel, type HarmonyView, type Impact, type PillarKey, type RatingGender } from "@freeharmony/engine";
 import { saveScan, type StoredScan } from "@/lib/store";
 import { scanDocuments } from "@/lib/harmony";
-import { formatImpact, formatRarity, formatScore, formatStanding, rateScan, scanGender } from "@/lib/rating";
+import { formatImpact, formatItemScore, formatRange, formatRarity, formatScore, formatStanding, formatValue, rateScan, scanGender } from "@/lib/rating";
 import { LandmarkPreview } from "./PhotoPicker";
 import { AnatomyPlate } from "./AnatomyPlate";
 
@@ -15,10 +15,9 @@ const tone = (score: number) => score >= 7 ? "is-great" : score >= 5.5 ? "is-goo
 export function ScoreBar({ score, average = true }: { score: number; average?: boolean }) {
   return <span className={`score-bar ${tone(score)}`} role="img" aria-label={`${score.toFixed(1)} out of 10`}><i style={{ width: `${Math.max(2, score * 10)}%` }}/>{average && <b aria-hidden="true"/>}</span>;
 }
-function ScoreChip({ score }: { score: number }) {
-  return <span className={`score-chip ${tone(score)}`}>{score.toFixed(1)}</span>;
+function ScoreChip({ score, text = score.toFixed(1) }: { score: number; text?: string }) {
+  return <span className={`score-chip ${tone(score)}`}>{text}</span>;
 }
-const range = (m: MeasurementScore) => `${formatMeasurement(m.ideal[0], m.unit)} – ${formatMeasurement(m.ideal[1], m.unit)}`;
 
 export function RatingReport({ initial }: { initial: StoredScan }) {
   const [scan, setScan] = useState(initial);
@@ -98,9 +97,9 @@ export function RatingReport({ initial }: { initial: StoredScan }) {
             <div className="measure-row is-head" role="row"><span role="columnheader">Measurement</span><span role="columnheader">Yours</span><span role="columnheader">Ideal</span><span role="columnheader">Score</span></div>
             {rows.map(m => <div className={`measure-row ${m.position === "within" ? "is-ideal" : ""}`} role="row" key={m.key}>
               <span role="cell" className="measure-name"><strong>{m.label}</strong><small>{m.position === "within" ? "Within the ideal range" : m.reading}{m.evidence < 1 && !m.reviewed ? " · estimated points" : ""}</small></span>
-              <span role="cell" className="measure-value">{formatMeasurement(m.value, m.unit)}</span>
-              <span role="cell" className="measure-ideal">{range(m)}</span>
-              <span role="cell" className="measure-score"><ScoreBar score={m.score} average={false}/><b>{m.score.toFixed(1)}</b></span>
+              <span role="cell" className="measure-value">{formatValue(m.value, m.unit, m.ideal)}</span>
+              <span role="cell" className="measure-ideal">{formatRange(m.ideal, m.unit)}</span>
+              <span role="cell" className="measure-score"><ScoreBar score={m.score} average={false}/><b>{formatItemScore(m.score, m.value, m.ideal)}</b></span>
             </div>)}
           </div>
         </div>; })}
@@ -137,8 +136,8 @@ function ImpactList({ title, kicker, items, empty }: { title: string; kicker: st
   return <div className="impact-column">
     <span className="folio">{kicker}</span><h2>{title}</h2>
     {items.length ? <ol>{items.slice(0, 8).map(item => <li key={item.key} className="impact-row">
-      <ScoreChip score={item.score}/>
-      <span className="impact-text"><strong>{item.label}</strong><small>{item.reading}{item.value !== undefined && item.unit ? ` · ${formatMeasurement(item.value, item.unit)}` : ""}{item.ideal && item.unit ? ` (ideal ${formatMeasurement(item.ideal[0], item.unit)}–${formatMeasurement(item.ideal[1], item.unit)})` : ""}</small></span>
+      <ScoreChip score={item.score} text={formatItemScore(item.score, item.value, item.ideal)}/>
+      <span className="impact-text"><strong>{item.label}</strong><small>{item.reading}{item.value !== undefined && item.unit ? ` · ${formatValue(item.value, item.unit, item.ideal)}` : ""}{item.ideal && item.unit ? ` (ideal ${formatRange(item.ideal, item.unit)})` : ""}</small></span>
       <span className={`impact-value ${item.impact >= 0 ? "is-up" : "is-down"}`}>{formatImpact(item.impact)}</span>
     </li>)}</ol> : <p className="impact-empty">{empty}</p>}
   </div>;

@@ -1,11 +1,13 @@
 import { describe, expect, it } from "vitest";
 import {
   ASSESSMENTS, CALIBRATION, HARMONY_CATALOG, IDEALS, automaticLandmarks, measurementScore, percentileOfScore, powerMean,
-  rarityOfScore, rateFace, scoreFromZ, scoreLabel, zFromScore, type ImageFeatures, type MeasurementDocument,
+  rarityOfScore, rateFace, readingOf, scoreFromZ, scoreLabel, zFromScore, type ImageFeatures, type MeasurementDocument,
 } from "../src/index";
 import { canonicalInput } from "./helpers";
 
 const front = (): MeasurementDocument => automaticLandmarks({ view: "front", aspect: 0.8, imageHeight: 768, mesh: canonicalInput().landmarks });
+// Population-typical photo features let all four pillars score on a front-only study.
+const typicalImage = () => ({ ...Object.fromEntries(Object.entries(CALIBRATION.features).filter(([k]) => k.startsWith("img.")).map(([k, v]) => [k.slice(4), v.mean])), version: 1 }) as unknown as ImageFeatures;
 
 describe("rating scale", () => {
   it("follows the published rarity anchors, symmetrically around 5", () => {
@@ -54,9 +56,18 @@ describe("measurement curves", () => {
   });
   it("has calibration for every assessment input", () => {
     for (const def of ASSESSMENTS) {
-      expect(CALIBRATION.assessments[def.key]?.male.sd).toBeGreaterThan(0);
+      for (const g of ["male", "female"] as const) {
+        if (def.only && def.only !== g) expect(CALIBRATION.assessments[def.key]?.[g]).toBeUndefined();
+        else expect(CALIBRATION.assessments[def.key]?.[g]?.sd, `${def.key} ${g}`).toBeGreaterThan(0);
+      }
       for (const t of def.terms) expect(CALIBRATION.features[t.feature]?.sd, t.feature).toBeGreaterThan(0);
     }
+  });
+  it("reads middling scores as middling and reverses dimorphism for a feminine target", () => {
+    const jaw = ASSESSMENTS.find(d => d.key === "angularity.jaw")!, masculineJaw = ASSESSMENTS.find(d => d.key === "dimorphism.jaw")!;
+    expect([readingOf(jaw, 7, "female"), readingOf(jaw, 5, "female"), readingOf(jaw, 3, "female")]).toEqual([jaw.high, jaw.mid, jaw.low]);
+    expect([readingOf(masculineJaw, 7, "male"), readingOf(masculineJaw, 3, "male")]).toEqual([masculineJaw.high, masculineJaw.low]);
+    expect([readingOf(masculineJaw, 7, "female"), readingOf(masculineJaw, 5, "female"), readingOf(masculineJaw, 3, "female")]).toEqual([masculineJaw.low, masculineJaw.mid, masculineJaw.high]);
   });
 });
 
@@ -75,15 +86,21 @@ describe("face rating", () => {
     expect(result.notes.join(" ")).toContain("side profile");
   });
   it("ranks flaws as score costs and strengths as score gains, with potential above the overall", () => {
-    // Population-typical photo features let all four pillars score on a front-only study.
-    const image = Object.fromEntries(Object.entries(CALIBRATION.features).filter(([k]) => k.startsWith("img.")).map(([k, v]) => [k.slice(4), v.mean])) as unknown as ImageFeatures;
-    const result = rateFace({ gender: "male", front: front(), image: { ...image, version: 1 } });
+    const result = rateFace({ gender: "male", front: front(), image: typicalImage() });
     expect(result.overall).not.toBeNull();
     expect(result.flaws.length).toBeGreaterThan(0);
     for (const f of result.flaws) expect(f.impact).toBeLessThan(0);
     for (const s of result.strengths) expect(s.impact).toBeGreaterThan(0);
     expect([...result.flaws].sort((a, b) => a.impact - b.impact)).toEqual(result.flaws);
     expect(result.potential!).toBeGreaterThanOrEqual(result.overall!.score);
+    // A flaw is never described with its favourable reading.
+    for (const f of result.flaws.filter(i => i.kind === "assessment")) expect(f.reading).not.toBe(ASSESSMENTS.find(d => d.key === f.key)!.high);
+  });
+  it("scores facial hair for men only", () => {
+    const items = (gender: "male" | "female") => rateFace({ gender, front: front(), image: typicalImage() }).pillars.dimorphism.items.map(i => i.key);
+    expect(items("male")).toContain("dimorphism.facial-hair");
+    expect(items("female")).not.toContain("dimorphism.facial-hair");
+    expect(items("female").length).toBeGreaterThan(5);
   });
   it("returns no score for an empty study", () => {
     const result = rateFace({ gender: "male" });

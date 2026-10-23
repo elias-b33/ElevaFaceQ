@@ -78,11 +78,35 @@ This app uses **% of marked vertical face height**, or a user-supplied actual
 distance in the same image plane. It does not label an assumed face size as a
 calibrated millimeter measurement.
 
+## Rating engine (`rating-1.1`)
+
+[`rating.spec.ts`](packages/engine/test/rating.spec.ts) checks the rating's
+arithmetic independently of any photograph:
+
+- The z-to-score map passes through the published rarity anchors (a 7 is about
+  1 in 18 people, an 8 about 1 in 250), is symmetric around 5 and inverts exactly.
+- The overall power mean (exponent 0.1) reproduces the published example: three
+  8s and a 4 give about 6.7.
+- A measurement scores exactly 10 inside its ideal range and less with distance
+  outside it. The ideal table covers exactly the 66 scored definitions and none
+  of the five supporting ones.
+- Every assessment input has population constants, and so does every gender an
+  assessment is scored for (facial hair is scored for men only).
+- Ratings are deterministic and bounded to 0–10. A front-only study is marked
+  incomplete. Flaws are sorted by their cost to the overall score, never carry
+  the favourable reading, and potential is never below the overall score.
+
+The population constants are produced by
+[`calibrate-rating.ts`](packages/engine/scripts/calibrate-rating.ts) and are
+reproduced exactly from the same inputs; see
+[calibration/rating](calibration/rating/README.md).
+
 ## Practical limits and saved reports
 
 These tests verify arithmetic and coordinate handling. They do not establish
 landmark accuracy on real photos, validate reference ranges as beauty targets,
-or validate a universal attractiveness score. Automatic profile ear, orbital and
+or validate a universal attractiveness score. The rating's agreement with human
+ratings is an in-sample estimate on a single reference set. Automatic profile ear, orbital and
 jaw points can be inferred and remain provisional until the user reviews them.
 Photo perspective and out-of-plane head rotation are not corrected by 2D roll
 leveling. The ±2-pixel envelope moves one coordinate at a time; it is not a

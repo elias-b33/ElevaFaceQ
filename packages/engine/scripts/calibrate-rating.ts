@@ -12,7 +12,7 @@
  */
 import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { ASSESSMENTS, assessmentValue, type Calibration } from "../src/rating/pillars";
+import { ASSESSMENTS, assessmentValue, assessmentsFor, type Calibration } from "../src/rating/pillars";
 import { PILLAR_P } from "../src/rating/pillars";
 import { powerMean, scoreFromZ } from "../src/rating/scale";
 import { ratingInputs } from "../src/rating/rate";
@@ -55,8 +55,9 @@ for (const f of features) {
   cal.features[f] = { mean: r4(st.mean), sd: r4(st.sd) };
 }
 for (const def of ASSESSMENTS) {
-  cal.assessments[def.key] = {} as Calibration["assessments"][string];
+  cal.assessments[def.key] = {};
   for (const g of genders) {
+    if (def.only && def.only !== g) continue;
     const v = samples.filter(s => s.gender === g).map(s => assessmentValue(def, s.inputs, cal)).filter((x): x is number => x !== null);
     const st = robust(v);
     cal.assessments[def.key]![g] = { mean: r4(st.mean), sd: r4(st.sd) };
@@ -66,9 +67,9 @@ for (const pillar of ["angularity", "dimorphism", "features"] as const) {
   cal.pillars[pillar] = {} as Calibration["pillars"]["angularity"];
   for (const g of genders) {
     const raws = samples.filter(s => s.gender === g).map(s => {
-      const items = ASSESSMENTS.filter(d => d.pillar === pillar).flatMap(d => {
-        const v = assessmentValue(d, s.inputs, cal), st = cal.assessments[d.key]![g];
-        if (v === null) return [];
+      const items = assessmentsFor(g).filter(d => d.pillar === pillar).flatMap(d => {
+        const v = assessmentValue(d, s.inputs, cal), st = cal.assessments[d.key]?.[g];
+        if (v === null || !st) return [];
         const z = (v - st.mean) / st.sd;
         return [{ score: scoreFromZ(d.dimorphic && g === "female" ? -z : z), weight: d.weight }];
       });
