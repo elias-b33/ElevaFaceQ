@@ -1,0 +1,481 @@
+{
+ "source": "Face Research Lab London Set (DeBruine & Jones 2017, CC BY 4.0): 102 adults, neutral front with left and right profiles",
+ "features": {
+  "front.cheekbone-height": {
+   "mean": 61.5101,
+   "sd": 7.37898
+  },
+  "img.submalarShadow": {
+   "mean": 0.00208429,
+   "sd": 0.0581731
+  },
+  "front.bigonial-width": {
+   "mean": 79.4227,
+   "sd": 2.03679
+  },
+  "img.lowerFaceWidth": {
+   "mean": 0.943563,
+   "sd": 0.0187637
+  },
+  "img.jawShadow": {
+   "mean": 0.329796,
+   "sd": 0.0944351
+  },
+  "side.gonial-angle": {
+   "mean": 133.367,
+   "sd": 13.533
+  },
+  "front.jaw-slope": {
+   "mean": 144.076,
+   "sd": 3.98576
+  },
+  "front.jaw-frontal-angle": {
+   "mean": 81.7647,
+   "sd": 7.09361
+  },
+  "front.face-width-to-height-ratio": {
+   "mean": 1.91694,
+   "sd": 0.14118
+  },
+  "side.mentolabial-angle": {
+   "mean": 136.488,
+   "sd": 12.0867
+  },
+  "side.recession-relative-to-frankfort-plane": {
+   "mean": -1.01298,
+   "sd": 5.02297
+  },
+  "front.chin-to-philtrum-ratio": {
+   "mean": 2.44197,
+   "sd": 0.346764
+  },
+  "side.submental-cervical-angle": {
+   "mean": 126.501,
+   "sd": 14.9299
+  },
+  "front.lower-third": {
+   "mean": 36.7457,
+   "sd": 2.88123
+  },
+  "side.brow-bossing-angle": {
+   "mean": 8.63114,
+   "sd": 7.89948
+  },
+  "side.nasofrontal-angle": {
+   "mean": 136.673,
+   "sd": 10.2623
+  },
+  "front.brow-thickness": {
+   "mean": 16.0874,
+   "sd": 1.06088
+  },
+  "img.browContrast": {
+   "mean": 0.491697,
+   "sd": 0.106278
+  },
+  "front.eyebrow-tilt": {
+   "mean": 12.6639,
+   "sd": 2.48594
+  },
+  "front.eyebrow-low-setedness": {
+   "mean": 1.23551,
+   "sd": 0.319947
+  },
+  "front.eye-aspect-ratio": {
+   "mean": 2.87085,
+   "sd": 0.267903
+  },
+  "front.total-facial-width-to-height-ratio": {
+   "mean": 1.35582,
+   "sd": 0.0814657
+  },
+  "img.facialHair": {
+   "mean": 0.0556885,
+   "sd": 0.104472
+  },
+  "img.hairLength": {
+   "mean": 0.00100169,
+   "sd": 0.0647157
+  },
+  "img.templeRecession": {
+   "mean": -0.166936,
+   "sd": 0.0831315
+  },
+  "front.lip-thickness": {
+   "mean": 25.2818,
+   "sd": 5.33757
+  },
+  "front.lower-lip-to-upper-lip-ratio": {
+   "mean": 1.41776,
+   "sd": 0.176291
+  },
+  "front.intercanthal-nasal-width-ratio": {
+   "mean": 1.07814,
+   "sd": 0.0841179
+  },
+  "front.nose-bridge-to-nose-width": {
+   "mean": 2.55022,
+   "sd": 0.194479
+  },
+  "side.nasal-projection": {
+   "mean": 0.505229,
+   "sd": 0.109275
+  },
+  "img.asymmetry": {
+   "mean": 0.0427049,
+   "sd": 0.0276442
+  },
+  "img.skinTexture": {
+   "mean": 0.020428,
+   "sd": 0.00679211
+  },
+  "img.skinBlotch": {
+   "mean": 2.10761,
+   "sd": 0.919038
+  },
+  "img.underEye": {
+   "mean": 1.03525,
+   "sd": 0.0734879
+  },
+  "img.scleraBrightness": {
+   "mean": 1.02341,
+   "sd": 0.107224
+  },
+  "img.scleraRedness": {
+   "mean": 0.0999067,
+   "sd": 0.0393771
+  },
+  "img.creasing": {
+   "mean": 0.0265937,
+   "sd": 0.00838703
+  },
+  "front.upper-eyelid-exposure": {
+   "mean": 0.301372,
+   "sd": 0.103414
+  },
+  "img.lipContrast": {
+   "mean": 2.67573,
+   "sd": 2.80593
+  },
+  "img.noseAsymmetry": {
+   "mean": 0.0114443,
+   "sd": 0.00728646
+  }
+ },
+ "assessments": {
+  "angularity.cheekbones": {
+   "male": {
+    "mean": -0.315704,
+    "sd": 0.526521
+   },
+   "female": {
+    "mean": 0.357579,
+    "sd": 0.561001
+   }
+  },
+  "angularity.jaw": {
+   "male": {
+    "mean": 0.0151703,
+    "sd": 0.627108
+   },
+   "female": {
+    "mean": -0.0169218,
+    "sd": 0.441137
+   }
+  },
+  "angularity.cheeks": {
+   "male": {
+    "mean": -0.30421,
+    "sd": 0.501008
+   },
+   "female": {
+    "mean": 0.46226,
+    "sd": 0.496905
+   }
+  },
+  "angularity.chin": {
+   "male": {
+    "mean": 0.124109,
+    "sd": 0.638212
+   },
+   "female": {
+    "mean": -0.1398,
+    "sd": 0.543292
+   }
+  },
+  "angularity.submental": {
+   "male": {
+    "mean": 0.0779987,
+    "sd": 0.939757
+   },
+   "female": {
+    "mean": 0.019379,
+    "sd": 0.746945
+   }
+  },
+  "dimorphism.jaw": {
+   "male": {
+    "mean": 0.382382,
+    "sd": 0.421099
+   },
+   "female": {
+    "mean": -0.378076,
+    "sd": 0.47979
+   }
+  },
+  "dimorphism.brow-ridge": {
+   "male": {
+    "mean": 0.295829,
+    "sd": 0.964657
+   },
+   "female": {
+    "mean": -0.481715,
+    "sd": 0.539599
+   }
+  },
+  "dimorphism.eyebrows": {
+   "male": {
+    "mean": 0.107096,
+    "sd": 0.421235
+   },
+   "female": {
+    "mean": -0.188439,
+    "sd": 0.290775
+   }
+  },
+  "dimorphism.eyes": {
+   "male": {
+    "mean": 0.344492,
+    "sd": 0.425101
+   },
+   "female": {
+    "mean": -0.15156,
+    "sd": 0.546946
+   }
+  },
+  "dimorphism.face-shape": {
+   "male": {
+    "mean": 0.228866,
+    "sd": 0.894103
+   },
+   "female": {
+    "mean": -0.332238,
+    "sd": 0.931172
+   }
+  },
+  "dimorphism.facial-hair": {
+   "male": {
+    "mean": 0.560941,
+    "sd": 1.05063
+   },
+   "female": {
+    "mean": -0.451196,
+    "sd": 0.625374
+   }
+  },
+  "dimorphism.hair-length": {
+   "male": {
+    "mean": 0.0154783,
+    "sd": 0.459741
+   },
+   "female": {
+    "mean": -0.325567,
+    "sd": 0.48087
+   }
+  },
+  "dimorphism.hairline": {
+   "male": {
+    "mean": 0.576542,
+    "sd": 0.892546
+   },
+   "female": {
+    "mean": -0.356933,
+    "sd": 0.628054
+   }
+  },
+  "dimorphism.lips": {
+   "male": {
+    "mean": 0.202096,
+    "sd": 0.810791
+   },
+   "female": {
+    "mean": -0.442703,
+    "sd": 0.520547
+   }
+  },
+  "dimorphism.nose": {
+   "male": {
+    "mean": 0.540247,
+    "sd": 0.68287
+   },
+   "female": {
+    "mean": -0.377243,
+    "sd": 0.710096
+   }
+  },
+  "features.symmetry": {
+   "male": {
+    "mean": -1.32285e-7,
+    "sd": 1.02333
+   },
+   "female": {
+    "mean": 0.050812,
+    "sd": 0.851247
+   }
+  },
+  "features.skin": {
+   "male": {
+    "mean": 0.0898136,
+    "sd": 0.881043
+   },
+   "female": {
+    "mean": 0.0297443,
+    "sd": 0.63961
+   }
+  },
+  "features.under-eyes": {
+   "male": {
+    "mean": -0.0172748,
+    "sd": 1.23614
+   },
+   "female": {
+    "mean": 0.0000367948,
+    "sd": 0.658866
+   }
+  },
+  "features.sclera": {
+   "male": {
+    "mean": -0.321717,
+    "sd": 0.85239
+   },
+   "female": {
+    "mean": 0.547305,
+    "sd": 0.593104
+   }
+  },
+  "features.creasing": {
+   "male": {
+    "mean": -0.252793,
+    "sd": 1.20866
+   },
+   "female": {
+    "mean": 0.216626,
+    "sd": 0.74164
+   }
+  },
+  "features.brows": {
+   "male": {
+    "mean": 0.146405,
+    "sd": 0.863197
+   },
+   "female": {
+    "mean": -0.128596,
+    "sd": 0.556025
+   }
+  },
+  "features.eyelids": {
+   "male": {
+    "mean": -0.140839,
+    "sd": 1.12478
+   },
+   "female": {
+    "mean": 0.194628,
+    "sd": 1.01286
+   }
+  },
+  "features.lips": {
+   "male": {
+    "mean": 0.0134324,
+    "sd": 0.623898
+   },
+   "female": {
+    "mean": -0.026919,
+    "sd": 0.756446
+   }
+  },
+  "features.nose": {
+   "male": {
+    "mean": -2.25139e-7,
+    "sd": 0.991119
+   },
+   "female": {
+    "mean": 0.0260739,
+    "sd": 0.961342
+   }
+  },
+  "features.hair": {
+   "male": {
+    "mean": -0.576542,
+    "sd": 0.892546
+   },
+   "female": {
+    "mean": 0.378006,
+    "sd": 0.659297
+   }
+  }
+ },
+ "pillars": {
+  "angularity": {
+   "male": {
+    "mean": 4.95205,
+    "sd": 0.85696
+   },
+   "female": {
+    "mean": 4.90661,
+    "sd": 0.91366
+   }
+  },
+  "dimorphism": {
+   "male": {
+    "mean": 4.94606,
+    "sd": 0.515321
+   },
+   "female": {
+    "mean": 4.80893,
+    "sd": 0.575588
+   }
+  },
+  "features": {
+   "male": {
+    "mean": 4.63697,
+    "sd": 0.754574
+   },
+   "female": {
+    "mean": 4.61779,
+    "sd": 0.828958
+   }
+  }
+ },
+ "harmony": {
+  "front": {
+   "male": {
+    "mean": 0.0389594,
+    "sd": 0.604585
+   },
+   "female": {
+    "mean": -0.314175,
+    "sd": 0.735423
+   }
+  },
+  "side": {
+   "male": {
+    "mean": 0.192618,
+    "sd": 0.776387
+   },
+   "female": {
+    "mean": -0.3062,
+    "sd": 0.909468
+   }
+  },
+  "combined": {
+   "male": {
+    "mean": 0.180701,
+    "sd": 0.592347
+   },
+   "female": {
+    "mean": -0.215884,
+    "sd": 0.668737
+   }
+  }
+ }
+}
