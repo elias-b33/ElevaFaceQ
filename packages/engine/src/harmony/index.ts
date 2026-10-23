@@ -3,3 +3,4 @@ export * from "./catalog";
 export * from "./landmarks";
 export * from "./analyze";
 export * from "./automatic";
+export * from "./profile-detect";

@@ -2,7 +2,11 @@
 
 **Elevate your face.**
 
-Your browser-based facial measurement workspace, based on [FreeHarmony](https://github.com/Blueturboguy07/freeharmony).
+A private face rating app. Add a front photo and a side profile and get a
+rating out of 10 in the style of FaceIQ Labs: Harmony, Angularity, Dimorphism
+and Features pillars, your percentile and rarity, strengths and flaws ranked by
+their effect on your score, and your potential. Everything runs in your browser.
+Based on [FreeHarmony](https://github.com/Blueturboguy07/freeharmony).
 No account, subscription, paid API, photo upload or hosted deployment is needed.
 
 ## Deploy your hosted version
@@ -29,66 +33,84 @@ Use the same browser and the exact same address to keep your history together.
 
 ## What is included
 
-- The Private Atlas: an immersive portrait campaign, centered wordmark, fullscreen
-  editorial navigation, interactive front/profile study and layered personal dossiers.
-  The warm ivory, charcoal and rust palette continues throughout the working studio.
-  Original fictional campaign portraits, fonts and illustrations are self-hosted;
-  image prompts and provenance are in `apps/web/public/images/credits.json`.
-- Restrained motion: slow portrait movement with a pause control, image crossfades,
-  scroll reveals, contour drawing, measurement counts and tactile dossier transitions.
-  Keyboard navigation and the system's reduced-motion preference are supported.
-- A consistent working studio: an indexed measurement library with expandable
-  formulas, region and perspective filters; a photograph-led collection; numbered
-  workspace settings; chapter-based photo/privacy guides; and quieter capture,
-  landmark and report controls. The campaign landing page keeps its own layout.
-- **71 named measurements: 36 front + 35 side**, covering all current public
-  FaceIQ measurement guides, including five supporting definitions.
-- Front photos use the pinned 478-point MediaPipe model with CPU inference,
-  matching the saved mapping study's inference path. The animated map preserves
-  the original image coordinates and provides pause, replay, timeline and layer
-  controls. It seeds 42 mesh anchors; hairline, ears, neck, eyelid hoods/creases
-  and nasal bridge edges remain unplaced until reviewed. Available measurements
-  depend on those observed points, rather than inferred anatomical guesses.
-- The calibrated harmony index uses the same metric weights and confidence
-  rules as the saved study. Failed photo checks remain failed. A pose-only
-  refusal can expose a separate provisional diagnostic, with unsupported areas
-  excluded and the accepted score withheld. It is not a population percentile.
-  The existing side-photo drafting and manual review tools remain available.
-- Detailed front and profile reports with formulas, anatomical point lists,
-  construction overlays, placement guidance and explicit missing-data states.
-- A guided editor for 53 front and 27 side landmarks, zoom, keyboard movement,
-  point confirmation, undo and saved review state. A priority review focuses on
-  inferred and missing positions. Existing manual/reviewed points survive a
-  detection rerun. Unplaced and low-evidence points are never measured.
-- Correct image aspect handling, pupil/eye-corner leveling for front views and
-  Frankfort leveling plus mirror handling for side views. The selected metric
-  shows a deterministic ±2-pixel placement sensitivity envelope.
-- Editable working ranges and a descriptive-only mode. Distances use % of face
-  height until you supply an actual measured scale; no face size is assumed.
-- A searchable measurement library, region/status filters, written observations,
-  all-measurement comparisons, CSV and JSON exports, and a self-contained offline
-  HTML report. Print / PDF uses the browser's local print dialog.
-- Validated version-3 JSON backups include automatic provenance, quality labels,
-  source dimensions, provisional diagnostics, named points, review state, scale,
-  notes and custom ranges. Version-1 and
-  version-2 backups and existing scans still open.
-- Original 18 frontal metrics and five legacy profile measures remain in the
-  classic results view, without rewriting the original saved measurements.
+- **A guided rating in three steps.** Choose the gender you are rated against,
+  add a front photo, then a side profile facing either way. Upload a file or use
+  the camera with a countdown. Each photo takes about 2–3 seconds to map on a
+  laptop CPU.
+- **Automatic landmarks on both views.** The front uses MediaPipe's 478-point
+  face mesh, with hair/skin/clothing segmentation for the hairline, face outline,
+  ears and neck. The profile is traced from the segmented silhouette: glabella,
+  nasion, nose, lips, chin, under-chin and neck come from the outline. The eye,
+  ear and orbital references are estimated with help from a lightweight pose
+  model, and they count for less until you review them.
+- **The rating report.** It shows an overall score with its label, percentile,
+  rarity and potential, plus the four pillar scores. Strengths and flaws are
+  ranked by how far each one moves your overall score. All 66 scored Harmony
+  measurements show your value, the ideal range for your gender and a score. The
+  Angularity, Dimorphism and Features assessments (25 for men, 24 for women)
+  each have a reading.
+- **Landmark fine-tuning with a live rating.** Move any point and the rating
+  updates as you go. Saved changes update the report. Formulas, construction
+  overlays, placement sensitivity and the full 71-measurement library remain
+  available, with a guided editor for 53 front and 27 side landmarks.
+- **Your ratings.** Every rating stays in this browser, with a trend across
+  ratings. Version-4 JSON backups include photos, landmarks, the rated gender and
+  the photo measurements. Older backups and scans still open.
+- A consistent, responsive design across the landing page, rating flow,
+  report, landmarks page, ratings history, measurement library, photo guide,
+  privacy page and settings, with keyboard navigation and support for the
+  reduced-motion preference. A "How to improve" page lists practical,
+  non-invasive steps. CSV/JSON exports, a self-contained offline HTML report
+  and Print / PDF through the browser.
+- The original 18 frontal metrics and the classic FreeHarmony results remain
+  available for studies that have them.
 - Optional local Ollama integration, off by default. No cloud AI integration.
 
-Scores inherit FreeHarmony's reference model. They describe photographed
-geometry; this fork does not reproduce FaceIQ Labs' proprietary scores or
-establish a universal attractiveness scale. Keep lighting, distance and head
-position consistent, and review the points before interpreting a change.
+## How the rating works
 
-The [public definition index](https://www.faceiqlabs.com/support/harmony), checked
-on 22 October 2026, contains 71 guides: 33 front and 33 side definitions used in
-their Harmony score, plus five supporting definitions (36 front, 35 side in total).
-This version implements all 71 as descriptive geometry. The local catalogue,
-formulas, working ranges and declared adaptations are in
-`packages/engine/src/harmony/`. FaceIQ's private score weights, reference corpus
-and AI are not reproduced. Working ranges are editable local conventions, not
-validated beauty thresholds or clinical targets.
+- **The scale.** Scores run from 0 to 10, and 5 is the reference population's
+  average. The scale is percentile-based and symmetric around 5: a 6 is about
+  the top 29%, a 7 about 1 in 18 people, an 8 about 1 in 250, and a 3 is as rare
+  as a 7.
+- **Harmony** scores the 66 measurements in FaceIQ Labs' public Harmony guide:
+  33 front and 33 side. Each measurement scores 10 inside a gender-specific
+  ideal range. Outside it, the score falls smoothly with distance, measured in
+  population standard deviations. Each measurement is weighted by its
+  importance and by how directly its landmarks were observed. The front counts
+  for 60% and the profile for 40%.
+- **Angularity, Dimorphism and Features** combine geometry with in-photo
+  comparisons, each standardised against the reference population for your
+  gender. The comparisons cover skin texture and evenness, under-eye darkness,
+  sclera, creasing, brow and lip contrast, facial hair (men only), hair length,
+  temple recession, cheek and jaw shading, and symmetry.
+- **Overall** is a power mean of the four pillars, with exponent 0.1, so the
+  weakest pillar weighs most. **Potential** is your overall score with your five
+  largest flaws at their ideal. Each flaw shows what reaching its ideal would
+  add to your score. Each strength shows what you would lose if it were only
+  typical.
+- **Calibration and accuracy.** The population constants were fitted by running
+  this app's own pipeline on the Face Research Lab London Set (DeBruine & Jones
+  2017, CC BY 4.0): 102 adults, each with a neutral front photo and both
+  profiles. On those faces, the overall score's Spearman correlation with mean
+  human attractiveness ratings is +0.49 for men and +0.50 for women, measured
+  within each sex (Harmony: +0.44 and +0.59). A person's left- and right-profile
+  ratings correlate at r = 0.93. These figures come from the same people the
+  constants were fitted to, so treat them as optimistic.
+  [calibration/rating](calibration/rating/README.md) explains how to reproduce
+  or recalibrate them.
+
+The rating describes photographed geometry and appearance. Lens distance,
+lighting, expression and head angle change it, so compare photos taken the same
+way. Ideal ranges follow public facial-aesthetics conventions, adjusted on the
+reference set. They are not validated beauty thresholds or clinical targets.
+FaceIQ Labs' proprietary weights, reference corpus and AI are not reproduced,
+and this project is not affiliated with FaceIQ Labs.
+
+The [public definition index](https://www.faceiqlabs.com/support/harmony),
+checked on 22 October 2026, contains 71 guides: 33 front and 33 side definitions
+used in their Harmony score, plus five supporting definitions (36 front, 35 side
+in total). All 71 are implemented in `packages/engine/src/harmony/`; the rating
+is in `packages/engine/src/rating/`.
 
 The numerical audit and its limits are documented in [MATH_AUDIT.md](MATH_AUDIT.md).
 Every definition has an independent numerical fixture. Seeded transformation
@@ -96,28 +118,23 @@ tests check all values under translation, scaling, rotation, mirroring of a
 profile and changes in image aspect. Missing leveling points, invalid angles
 and insufficient score coverage produce explicit missing/invalid results.
 
-## Create a complete report
+## Get your rating
 
-1. Choose **Begin a study** and select a front photograph or use the camera. The
-   models suggest landmarks automatically, then show a count of image-based and
-   inferred positions. Open the dossier to see the report.
-2. Use **Check priority points** to inspect inferred and missing details. Move
-   any dot, confirm it, and continue. You can also inspect all points and confirm
-   checked usable suggestions together. Left/right refers to the image.
-3. Add a side photo from the dossier. Either facing direction works. The app
-   attempts a profile face mesh and traces the visible silhouette with the local
-   segmentation model and image edges. Ear opening, orbital references, corneal
-   front and jaw tangents are anatomical estimates and need closer review.
-4. Existing reports have **Auto-detect points** / **Detect again** controls.
-   Manual corrections, reviewed positions and a measured scale are kept. Save
-   changes to persist the draft; export includes unsaved edits too.
-5. Export CSV/JSON or download the detailed offline report. Print / PDF creates
-   a local PDF through your browser. Complete photo backups are in Settings.
-
-The draft is useful immediately, with provisional labels. Detection is not a
-claim that every point is exact: hidden/cropped features remain unplaced, weak
-crease suggestions are excluded until confirmed, and a true profile may need
-silhouette-assisted eye and ear estimates when the face mesh cannot lock on.
+1. Choose **Rate my face**, pick the gender you want to be rated against and
+   continue.
+2. Add a front photo. Face the camera with a neutral expression and even light,
+   with your hair off your forehead and ears if possible. The landmarks appear on
+   the photo once it is mapped.
+3. Add a side profile. Turn 90° and keep your head level, with the whole face,
+   ear, chin and neck visible against a plain background. Either direction works.
+   You can skip this step and rate the front alone; the rating is then marked
+   incomplete.
+4. Open your rating. Use **Adjust landmarks** to correct any point; the live
+   rating follows your edits, and saving updates the report. Estimated points
+   (the profile's ear, orbital rim and eye) count for less until you review them.
+5. Switch **Male / Female** on the report to rate against the other gender's
+   ideals. **Print / PDF** creates a local PDF. Complete photo backups are in
+   Settings.
 
 Millimeter distances require a real known distance in the same image plane.
 Without it, `% FH` means a percentage of marked vertical hairline-to-chin height.
@@ -170,7 +187,7 @@ Photo requests occur only when you explicitly choose an AI report/check.
 
 ## Reinstalling or moving the project
 
-Initial installation requires internet access for packages and the two public
+Initial installation requires internet access for packages and the three public
 vision models. Regular use after setup requires no internet connection.
 
 ```powershell
@@ -182,8 +199,8 @@ pnpm start
 ```
 
 The reviewed asset setup copies MediaPipe's installed WASM files and downloads
-the pinned version-1 face and SelfieMulticlass models from Google's official
-storage only if missing. Their SHA-256 hashes are checked before use. Starting the app never downloads anything.
+the pinned version-1 Face Landmarker, SelfieMulticlass and Pose Landmarker Lite
+models from Google's official storage only if missing. Their SHA-256 hashes are checked before use. Starting the app never downloads anything.
 The workspace configuration disables install lifecycle scripts and enables
 package-store integrity checking; `.npmrc` also retains these settings for older
 pnpm versions. Review and scan new dependencies before changing the lockfile.
@@ -211,8 +228,13 @@ and [Image Segmenter documentation](https://ai.google.dev/edge/mediapipe/solutio
 describe its intended use and limitations.
 
 SHA-256: c6748b1253a99067ef71f7e26ca71096cd449baefa8f101900ea23016507e0e0.
-The original 3.8 MB Face Landmarker model remains unchanged. Both model hashes
-are verified by the local launcher; it downloads nothing during startup.
+The original 3.8 MB Face Landmarker model remains unchanged.
+
+Profile photos also use MediaPipe Pose Landmarker Lite, float16 version 1
+(Apache-2.0; 5.8 MB), to locate the eye, ear and mouth before the silhouette is
+traced. SHA-256: 59929e1d1ee95287735ddd833b19cf4ac46d29bc7afddbbf6753c459690d574a.
+All three models run on the CPU, as in the calibration. Their hashes are
+verified by the local launcher, which downloads nothing during startup.
 
 Instrument Serif Regular and Italic come from Google's official fonts repository,
 under the SIL Open Font License. The complete license is retained at

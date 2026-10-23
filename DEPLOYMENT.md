@@ -28,7 +28,7 @@ The root package declares the same pinned Next.js and React versions as `apps/we
 
 ## What the build verifies
 
-The application build copies MediaPipe's WASM runtime from the frozen dependency installation, fetches missing Face Landmarker and SelfieMulticlass model files from Google's official storage, checks their pinned SHA-256 hashes and compiles Next.js. Generated model files stay out of Git and are reconstructed during a clean build. Fonts and campaign images are self-hosted application assets. Research photographs, local captures, backups and training data are excluded from the source deployment.
+The application build copies MediaPipe's WASM runtime from the frozen dependency installation, fetches missing Face Landmarker, SelfieMulticlass and Pose Landmarker Lite model files from Google's official storage, checks their pinned SHA-256 hashes and compiles Next.js. Generated model files stay out of Git and are reconstructed during a clean build. Fonts and campaign images are self-hosted application assets. Research photographs, local captures, backups and training data are excluded from the source deployment.
 
 The final verification checks that both deployment entrypoints select Next.js and the correct output directory, and resolve the pinned Next.js version. It also checks that Next.js produced a production build, the compiled hosted-edition flag is enabled, the hosted Content Security Policy excludes localhost services and development `unsafe-eval`, the model hashes match and WASM files are present. A failure stops CI or the Vercel deployment. `wasm-unsafe-eval` remains enabled because the in-browser vision runtime needs WebAssembly.
 
@@ -64,8 +64,8 @@ A successful local/CI build confirms source compatibility and packaged assets; t
 
 ## Verify the deployed page
 
-Open the deployment URL, begin a study and check a frontal report. Add a side photo to inspect the profile draft. Models must load from `/mediapipe/` on the deployment origin and fonts from `/fonts/`. No photo-upload request should occur. The hosted edition disables optional localhost Ollama controls and removes local service addresses from its Content Security Policy.
+Open the deployment URL, choose **Rate my face**, add a front photo and a side profile, and check that the rating report opens with all four pillars scored. Models must load from `/mediapipe/` on the deployment origin and fonts from `/fonts/`. No photo-upload request should occur. The hosted edition disables optional localhost Ollama controls and removes local service addresses from its Content Security Policy.
 
 Save and reload an analysis in the same browser. Browser history belongs to an origin, so localhost, each Vercel preview hostname and the production domain have separate storage. Use **Settings → Export backup / Restore backup** to move your own saved work; those files are not part of deployment.
 
-The application keeps the upstream FreeHarmony attribution and AGPL-3.0 license. Vercel's normal hosting and traffic limits apply. The hosted interface does not turn the local research rating pilot into a validated production attractiveness score.
+The application keeps the upstream FreeHarmony attribution and AGPL-3.0 license. Vercel's normal hosting and traffic limits apply. The rating's calibration, accuracy and limits are described in the [README](README.md#how-the-rating-works); hosting it does not make it a validated measure of attractiveness.

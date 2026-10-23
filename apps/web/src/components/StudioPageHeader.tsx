@@ -9,7 +9,7 @@ export function StudioPageHeader({ section, title, description, action, children
   section: string; title: ReactNode; description: string; action?: { href: string; label: string }; children?: ReactNode;
 }) {
   return <header className="studio-page-header">
-    <div className="studio-breadcrumb"><Link href="/">The studio</Link><span>/</span><span>{section}</span></div>
-    <div className="studio-heading-composition"><div><p className="studio-overline">ELEVAFACE / THE PRIVATE EDITION</p><h1>{title}</h1></div><div className="studio-heading-note"><p>{description}</p>{action && <Link href={action.href} className="studio-inline-link">{action.label}<StudioArrow diagonal/></Link>}{children}</div></div>
+    <div className="studio-breadcrumb"><Link href="/">Home</Link><span>/</span><span>{section}</span></div>
+    <div className="studio-heading-composition"><div><h1>{title}</h1></div><div className="studio-heading-note"><p>{description}</p>{action && <Link href={action.href} className="studio-inline-link">{action.label}<StudioArrow diagonal/></Link>}{children}</div></div>
   </header>;
 }

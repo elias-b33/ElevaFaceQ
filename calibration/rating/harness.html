@@ -1,0 +1,48 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>vision harness</title></head>
+<body>
+<script type="module">
+import { FaceLandmarker, FilesetResolver, ImageSegmenter, PoseLandmarker } from "/tv/vision_bundle.mjs";
+const fileset = await FilesetResolver.forVisionTasks("/mp/wasm");
+const face = await FaceLandmarker.createFromOptions(fileset, { baseOptions: { modelAssetPath: "/mp/face_landmarker.task", delegate: "CPU" }, runningMode: "IMAGE", numFaces: 2, outputFaceBlendshapes: true, outputFacialTransformationMatrixes: true, minFaceDetectionConfidence: .5, minFacePresenceConfidence: .5 });
+const faceLow = await FaceLandmarker.createFromOptions(fileset, { baseOptions: { modelAssetPath: "/mp/face_landmarker.task", delegate: "CPU" }, runningMode: "IMAGE", numFaces: 2, outputFacialTransformationMatrixes: true, minFaceDetectionConfidence: .2, minFacePresenceConfidence: .3 });
+const seg = await ImageSegmenter.createFromOptions(fileset, { baseOptions: { modelAssetPath: "/mp/selfie_multiclass.tflite", delegate: "CPU" }, runningMode: "IMAGE", outputCategoryMask: true, outputConfidenceMasks: true });
+const pose = await PoseLandmarker.createFromOptions(fileset, { baseOptions: { modelAssetPath: "/mp/pose_landmarker_lite.task", delegate: "CPU" }, runningMode: "IMAGE", numPoses: 1, minPoseDetectionConfidence: .3, minPosePresenceConfidence: .3 });
+const b64 = u8 => { let s = ""; for (let i = 0; i < u8.length; i += 0x8000) s += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000)); return btoa(s); };
+window.run = async (src) => {
+  const img = new Image(); img.src = src; await img.decode();
+  const full = document.createElement("canvas"); full.width = img.naturalWidth; full.height = img.naturalHeight;
+  full.getContext("2d").drawImage(img, 0, 0);
+  const scale = Math.min(1, 1024 / Math.max(full.width, full.height));
+  const small = document.createElement("canvas"); small.width = Math.round(full.width * scale); small.height = Math.round(full.height * scale);
+  small.getContext("2d", { willReadFrequently: true }).drawImage(full, 0, 0, small.width, small.height);
+  const t0 = performance.now();
+  const f = face.detect(full);
+  const t1 = performance.now();
+  const fl = f.faceLandmarks.length ? null : faceLow.detect(small);
+  const s = seg.segment(small);
+  const t2 = performance.now();
+  const cat = s.categoryMask.getAsUint8Array().slice();
+  const bg = s.confidenceMasks[0].getAsFloat32Array();
+  const bgq = new Uint8Array(bg.length); for (let i = 0; i < bg.length; i++) bgq[i] = Math.round(bg[i] * 255);
+  const maskW = s.categoryMask.width, maskH = s.categoryMask.height; s.close();
+  const p = pose.detect(small);
+  const t3 = performance.now();
+  return {
+    width: full.width, height: full.height, smallWidth: small.width, smallHeight: small.height,
+    faces: f.faceLandmarks.length,
+    mesh: f.faceLandmarks[0]?.map(q => [q.x, q.y, q.z]) ?? null,
+    matrix: f.facialTransformationMatrixes?.[0]?.data ? Array.from(f.facialTransformationMatrixes[0].data) : null,
+    blendshapes: f.faceBlendshapes?.[0] ? Object.fromEntries(f.faceBlendshapes[0].categories.map(c => [c.categoryName, c.score])) : null,
+    lowFaces: fl ? fl.faceLandmarks.length : null,
+    lowMesh: fl?.faceLandmarks[0]?.map(q => [q.x, q.y, q.z]) ?? null,
+    lowMatrix: fl?.facialTransformationMatrixes?.[0]?.data ? Array.from(fl.facialTransformationMatrixes[0].data) : null,
+    maskW, maskH, categories: b64(cat), background: b64(bgq),
+    pose: p.landmarks[0]?.map(q => [q.x, q.y, q.z, q.visibility ?? 0]) ?? null,
+    jpeg: small.toDataURL("image/jpeg", .93),
+    ms: { face: t1 - t0, seg: t2 - t1, pose: t3 - t2 },
+  };
+};
+window.ready = true;
+</script>
+</body></html>

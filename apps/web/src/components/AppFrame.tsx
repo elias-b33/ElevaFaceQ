@@ -18,10 +18,10 @@ export function LabIcon({ kind, className = "" }: { kind: string; className?: st
 }
 
 const NAV = [
-  { href: "/", label: "The studio", number: "01" },
-  { href: "/measurements", label: "The face atlas", number: "02" },
-  { href: "/progress", label: "Your collection", number: "03" },
-  { href: "/guide", label: "Photo notes", number: "04" },
+  { href: "/progress", label: "Your ratings" },
+  { href: "/measurements", label: "Measurements" },
+  { href: "/guide", label: "Photo guide" },
+  { href: "/about", label: "Privacy" },
 ];
 
 export function AppFrame({ children }: { children: React.ReactNode }) {
@@ -83,11 +83,33 @@ export function AppFrame({ children }: { children: React.ReactNode }) {
     return () => { document.body.style.overflow = previous; };
   }, [menuOpen]);
 
+  const current = (href: string) => href === "/" ? path === "/" : path.startsWith(href);
   return <div ref={frame} className={"atlas-frame maison-frame" + (path === "/" ? "" : " interior-frame")}>
-    <a href="#workspace" className="skip-link">Skip to workspace</a>
-    <header className="maison-header"><div className="maison-header-left"><button className="maison-menu-trigger" onClick={() => { menu.current?.showModal(); setMenuOpen(true); }} aria-expanded={menuOpen} aria-controls="studio-menu"><span className="menu-bars" aria-hidden="true"><i/><i/></span><span>Menu</span></button><Link className="header-atlas-link" href="/measurements">The atlas</Link></div><Link href="/" className="maison-wordmark" aria-label="ElevaFace home">ElevaFace<span>.</span></Link><div className="maison-header-right"><Link href="/progress" className="header-collection-link">Collection</Link><Link href="/scan" className="maison-booking">Begin a study <span>↗</span></Link></div><div className="reading-progress" aria-hidden="true"/></header>
-    <dialog ref={menu} id="studio-menu" className="maison-menu" onClose={() => setMenuOpen(false)} onClick={event => { if (event.target === event.currentTarget) closeMenu(); }} aria-label="Studio navigation"><div className="menu-shell"><div className="menu-topline"><span>ELEVAFACE / THE PRIVATE ATLAS</span><button onClick={closeMenu} className="menu-close" aria-label="Close menu">Close <span>×</span></button></div><div className="menu-composition"><nav aria-label="Main navigation">{NAV.map(item => <Link key={item.href} href={item.href} onClick={closeMenu} aria-current={(item.href === "/" ? path === "/" : path.startsWith(item.href)) ? "page" : undefined}><span>{item.number}</span><span>{item.label}</span><i>↗</i></Link>)}<Link href="/settings" onClick={closeMenu}><span>05</span><span>Settings & backups</span><i>↗</i></Link></nav><div className="menu-image"><img src="/images/campaign-profile.webp" alt="" width="1536" height="1024"/><span>INDIVIDUALITY, IN FOCUS.</span></div></div><div className="menu-bottomline"><span>YOUR PHOTOGRAPHS STAY WITH YOU.</span><Link href="/scan" onClick={closeMenu}>Begin a private study ↗</Link></div></div></dialog>
+    <a href="#workspace" className="skip-link">Skip to content</a>
+    <header className="site-header">
+      <Link href="/" className="site-logo" aria-label="ElevaFace home">ElevaFace<span>.</span></Link>
+      <nav className="site-nav" aria-label="Main navigation">{NAV.map(item => <Link key={item.href} href={item.href} aria-current={current(item.href) ? "page" : undefined}>{item.label}</Link>)}</nav>
+      <div className="site-header-actions">
+        <Link href="/scan" className="site-cta">Rate my face</Link>
+        <button className="site-menu-button" onClick={() => { menu.current?.showModal(); setMenuOpen(true); }} aria-expanded={menuOpen} aria-controls="site-menu" aria-label="Open menu"><span aria-hidden="true"><i/><i/></span></button>
+      </div>
+    </header>
+    <dialog ref={menu} id="site-menu" className="site-menu" onClose={() => setMenuOpen(false)} onClick={event => { if (event.target === event.currentTarget) closeMenu(); }} aria-label="Navigation">
+      <div className="site-menu-panel">
+        <div className="site-menu-top"><Link href="/" className="site-logo" onClick={closeMenu}>ElevaFace<span>.</span></Link><button onClick={closeMenu} className="site-menu-close" aria-label="Close menu"><span aria-hidden="true">×</span></button></div>
+        <nav aria-label="Menu">{[{ href: "/", label: "Home" }, ...NAV, { href: "/settings", label: "Settings & backups" }].map(item => <Link key={item.href} href={item.href} onClick={closeMenu} aria-current={current(item.href) ? "page" : undefined}>{item.label}<i aria-hidden="true">→</i></Link>)}</nav>
+        <Link href="/scan" className="site-menu-cta" onClick={closeMenu}>Rate my face</Link>
+        <p className="site-menu-note">Free, private and entirely on your device.</p>
+      </div>
+    </dialog>
     <div id="workspace" className="atlas-workspace"><div key={path} className="page-arrival">{children}</div></div>
-    <footer className="maison-footer"><div className="footer-topline"><p>ELEVATE YOUR FACE.</p><span>PRIVATE BY DESIGN.</span></div><Link className="footer-wordmark" href="/" aria-label="ElevaFace home">ElevaFace<span>.</span></Link><div className="footer-bottomline"><p>An independent study of the face.<br/>On your device. On your terms.</p><nav aria-label="Footer navigation"><Link href="/about">About & privacy</Link><Link href="/guide">Photo notes</Link><Link href="/settings">Settings & backups</Link></nav><span>FREEHARMONY / AGPL-3.0<br/>THE PRIVATE EDITION © 2026</span></div></footer>
+    <footer className="site-footer">
+      <div className="site-footer-inner">
+        <div className="site-footer-brand"><Link href="/" className="site-logo">ElevaFace<span>.</span></Link><p>A private face rating that runs entirely in your browser. No account, no uploads.</p><Link href="/scan" className="site-footer-cta">Rate my face →</Link></div>
+        <nav aria-label="Product"><h2>Product</h2><Link href="/scan">Rate my face</Link><Link href="/progress">Your ratings</Link><Link href="/measurements">Measurements</Link></nav>
+        <nav aria-label="Help"><h2>Help</h2><Link href="/guide">Photo guide</Link><Link href="/about">Privacy & method</Link><Link href="/settings">Settings & backups</Link></nav>
+      </div>
+      <div className="site-footer-bottom"><span>© 2026 ElevaFace · Built on FreeHarmony (AGPL-3.0)</span><span>Not affiliated with FaceIQ Labs</span></div>
+    </footer>
   </div>;
 }

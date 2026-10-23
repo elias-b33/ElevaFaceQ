@@ -170,6 +170,6 @@ export function describeMeasurement(def: MeasurementDefinition, result: HarmonyM
   }
   if (result.status === "invalid") return result.reason ?? "Check the landmark construction.";
   const value = formatMeasurement(result.value, result.unit);
-  const read = result.reference && result.position ? ` It is ${result.position === "within" ? "within" : result.position} the selected working range (${formatMeasurement(result.reference.lo, result.unit)}–${formatMeasurement(result.reference.hi, result.unit)}).` : " This is a descriptive measurement; no target range is applied.";
+  const read = result.reference && result.position ? ` It is ${result.position === "within" ? "within" : result.position} the ideal range (${formatMeasurement(result.reference.lo, result.unit).replace(/\s?(% FH|mm|×|%|°)$/, "")}${result.reference.lo < 0 ? " to " : "–"}${formatMeasurement(result.reference.hi, result.unit)}).` : " This is a descriptive measurement; no target range is applied.";
   return `This photo measures ${value}.${read} ${result.status === "provisional" ? "Some contributing points still need review." : "All contributing landmarks have been marked as reviewed."}`;
 }

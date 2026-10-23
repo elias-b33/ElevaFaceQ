@@ -31,6 +31,11 @@ if (!existsSync(contourFile) || createHash("sha256").update(readFileSync(contour
   console.error("Local contour model is missing or failed integrity verification. Run the reviewed asset setup.");
   process.exit(1);
 }
+const poseFile = join(app, "public", "mediapipe", "pose_landmarker_lite.task");
+if (!existsSync(poseFile) || createHash("sha256").update(readFileSync(poseFile)).digest("hex") !== "59929e1d1ee95287735ddd833b19cf4ac46d29bc7afddbbf6753c459690d574a") {
+  console.error("Local pose model is missing or failed integrity verification. Run the reviewed asset setup.");
+  process.exit(1);
+}
 if (mode === "start" && !existsSync(join(app, ".next", "BUILD_ID"))) {
   console.error("Build the app first with pnpm build, or use pnpm dev for development.");
   process.exit(1);
